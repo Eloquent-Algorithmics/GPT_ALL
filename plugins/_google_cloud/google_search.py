@@ -1,3 +1,6 @@
+"""
+This module defines the Google Search plugin.
+"""
 
 # !/usr/bin/env python
 # coding: utf-8
@@ -24,24 +27,36 @@ class GoogleSearchPlugin(PluginBase):
     """
 
     def __init__(self):
-        GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-        if GOOGLE_API_KEY is None:
+
+        """
+        Initialize the GoogleSearchPlugin class.
+
+        """
+        # Get the API key and CSE ID from environment variables
+        google_api_key = os.getenv("GOOGLE_API_KEY")
+        if google_api_key is None:
             raise ValueError("GOOGLE_API_KEY not set")
 
-        GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
-        if GOOGLE_CSE_ID is None:
+        google_cse_id = os.getenv("GOOGLE_CSE_ID")
+        if google_cse_id is None:
             raise ValueError("GOOGLE_CSE_ID not set")
 
-        super().__init__(
-            GOOGLE_API_KEY=GOOGLE_API_KEY,
-            GOOGLE_CSE_ID=GOOGLE_CSE_ID,
-        )
+        super().__init__()
+
+        # Set the API key and CSE ID as instance attributes
+        self.api_key = google_api_key
+        self.cse_id = google_cse_id
 
     async def initialize(self):
         # Initialization code if needed
         pass
 
     async def search_google(self, query: str) -> List:
+
+        """
+        Search Google and return results.
+        """
+
         url = "https://www.googleapis.com/customsearch/v1"
         params = {
             "key": self.api_key,
@@ -86,7 +101,7 @@ class GoogleSearchPlugin(PluginBase):
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "The query to perform the search on.",
+                                "description": "query perform the search on.",
                             },
                         },
                         "required": ["query"],
