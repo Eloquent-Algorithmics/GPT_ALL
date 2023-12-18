@@ -52,3 +52,7 @@ if GOOGLE_API_KEY is None:
 GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
 if GOOGLE_API_KEY is None or GOOGLE_CSE_ID is None:
     raise ValueError("GOOGLE_API_KEY and GOOGLE_CSE_ID not set")
+
+TTS_ENGINE = os.getenv("TTS_ENGINE", "pyttsx3")
+TTS_VOICE_ID = os.getenv("TTS_VOICE_ID")
+TTS_RATE = os.getenv("TTS_RATE")

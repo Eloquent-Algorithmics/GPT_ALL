@@ -30,21 +30,21 @@ class AccuWeatherPlugin(PluginBase):
     """
 
     def __init__(self):
-        ACCUWEATHER_API_KEY = os.getenv("ACCUWEATHER_API_KEY")
-        if ACCUWEATHER_API_KEY is None:
+        accuweather_api_key = os.getenv("ACCUWEATHER_API_KEY")
+        if accuweather_api_key is None:
             raise ValueError("ACCUWEATHER_API_KEY not set")
 
-        ACCUWEATHER_BASE_URL = os.getenv("ACCUWEATHER_BASE_URL")
-        if ACCUWEATHER_BASE_URL is None:
+        accuweather_base_url = os.getenv("ACCUWEATHER_BASE_URL")
+        if accuweather_base_url is None:
             raise ValueError("ACCUWEATHER_BASE_URL not set")
 
         super().__init__(
-            ACCUWEATHER_API_KEY=ACCUWEATHER_API_KEY,
-            ACCUWEATHER_BASE_URL=ACCUWEATHER_BASE_URL,
+            ACCUWEATHER_API_KEY=accuweather_api_key,
+            ACCUWEATHER_BASE_URL=accuweather_base_url,
         )
 
-        self.api_key = ACCUWEATHER_API_KEY
-        self.base_url = ACCUWEATHER_BASE_URL
+        self.api_key = accuweather_api_key
+        self.base_url = accuweather_base_url
 
     async def initialize(self):
         # Initialization code if needed
@@ -55,7 +55,9 @@ class AccuWeatherPlugin(PluginBase):
         This function extracts the location from the user input.
         """
         doc = nlp(user_input)
-        locations = [ent.text for ent in doc.ents if ent.label_ in ("GPE", "LOC")]
+        locations = [
+            ent.text for ent in doc.ents if ent.label_ in ("GPE", "LOC")
+        ]
         return locations
 
     async def get_location_key(self, location_name):
@@ -73,10 +75,18 @@ class AccuWeatherPlugin(PluginBase):
                 else:
                     return None
 
-    async def get_current_weather(self, location: str):
+    async def get_current_weather(self, location: str = "Atlanta"):
         """
         This function gets the current weather for the given location.
+
+        If no location provided or an empty string passed, defaults to Atlanta.
+
         """
+
+        # Check if the location is an empty string and set it to the default
+        if not location:
+            location = "Atlanta"
+
         location_key = await self.get_location_key(location)
         if not location_key:
             return json.dumps(
@@ -135,13 +145,13 @@ class AccuWeatherPlugin(PluginBase):
                 "type": "function",
                 "function": {
                     "name": "get_current_weather",
-                    "description": "Get the current weather in a given location.",
+                    "description": "Get the current weather in a location.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "location": {
                                 "type": "string",
-                                "description": "The city and state, e.g. Atlanta, GA.",
+                                "description": "The city, e.g. Atlanta.",
                             },
                         },
                         "required": ["location"],

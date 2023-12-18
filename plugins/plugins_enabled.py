@@ -9,13 +9,21 @@ from plugins.plugin_base import PluginBase
 
 
 async def enable_plugins(available_functions, tools):
+
+    """
+    Enable plugins.
+
+    """
+
     plugins_folder = "plugins"
 
     # Iterate through the files in the plugins folder
     for file in os.listdir(plugins_folder):
         if file.endswith(".py") and not file.startswith("_"):
             # Import the module dynamically
-            spec = importlib.util.spec_from_file_location(file[:-3], os.path.join(plugins_folder, file))
+            spec = importlib.util.spec_from_file_location(
+                file[:-3], os.path.join(plugins_folder, file)
+            )
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
