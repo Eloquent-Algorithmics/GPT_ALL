@@ -16,7 +16,7 @@ import spacy
 import speech_recognition as sr
 
 
-from output.audio_pyttsx3 import tts_output
+from output_methods.audio_pyttsx3 import tts_output
 
 
 nlp = spacy.load("en_core_web_md")
@@ -33,11 +33,9 @@ def get_similarity_score(text1, text2):
     Returns:
         float: The similarity score between the two texts.
     """
-    logging.debug("Computing similarity score between '%s' and '%s'", text1, text2)
     doc1 = nlp(text1)
     doc2 = nlp(text2)
     score = doc1.similarity(doc2)
-    logging.debug("Similarity score: %s", score)
     return score
 
 
@@ -66,7 +64,6 @@ def recognize_command(text, commands):
             best_match = command
 
     if max_similarity > 0.7:  # You can adjust this threshold
-        logging.debug("Recognized command: %s", best_match)
         return best_match
     else:
         return None
@@ -81,7 +78,6 @@ def get_user_input():
     """
     # print("Please enter a command or type 'speak' to use voice recognition:")
     user_input = input()
-    logging.debug("User input: %s", user_input)
     if user_input.lower() == "speak":
         return recognize_speech()
     else:
