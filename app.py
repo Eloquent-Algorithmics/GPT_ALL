@@ -94,10 +94,7 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
     text = kwargs.get("text", "")
 
     messages = [
-        {
-            "role": "system",
-            "content": "You are the brain of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.",
-        },
+        {"role": "system", "content": "You are the brains of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.",},
         {"role": "user", "content": question},
         {"role": "assistant", "content": text},
     ]
@@ -304,7 +301,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314",
-                "description": "Ask a smarter LLM that is able to understand more complex concepts and perform complex tasks to respond to more difficult requests, and verify and correct responses before they are returned as a final response.",
+                "description": "Ask a smarter AI LLM that is able to understand more complex concepts and perform complex tasks.",
                 "parameters": {
                     "type": "object",
                     "properties": {

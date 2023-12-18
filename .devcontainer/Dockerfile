@@ -1,16 +1,34 @@
+
+# Use the official Miniconda image as a parent image
 FROM mcr.microsoft.com/devcontainers/miniconda:0-3
 
-# Copy environment.yml (if found) to a temp location so we update the environment. Also
-# copy "noop.txt" so the COPY instruction does not fail if no environment.yml exists.
-COPY environment.yml* .devcontainer/noop.txt /tmp/conda-tmp/
-RUN if [ -f "/tmp/conda-tmp/environment.yml" ]; then umask 0002 && /opt/conda/bin/conda env update -n base -f /tmp/conda-tmp/environment.yml; fi \
-    && rm -rf /tmp/conda-tmp
+# Set the working directory in the container
+WORKDIR /workspace
 
-# [Optional] Uncomment to install a different version of Python than the default
-# RUN conda install -y python=3.6 \
-#     && pip install --no-cache-dir pipx \
-#     && pipx reinstall-all
+# Initialize conda for shell interaction
+RUN conda init
 
-# [Optional] Uncomment this section to install additional OS packages.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
+# Create a new Conda environment named eAI with Python 3.12
+RUN conda create -n eAI -c conda-forge python=3.12 -y
+
+# Initialize conda for shell interaction and set conda to automatically activate the base environment
+RUN conda init bash \
+    && echo "conda activate eAI" >> ~/.bashrc
+
+# Copy the requirements.txt file into the container at /workspace
+COPY requirements.txt /workspace/
+
+# Install the Python requirements in the eAI environment
+RUN conda run -n eAI pip install --no-cache-dir -r requirements.txt
+
+# Download the SpaCy NLP model in the eAI environment
+RUN conda run -n eAI python -m spacy download en_core_web_sm
+
+# Set the default environment to eAI when starting the container
+# This will activate the eAI environment for any interactive or non-interactive shell
+ENV CONDA_DEFAULT_ENV=eAI
+ENV CONDA_PREFIX=/opt/conda/envs/eAI
+ENV PATH=$CONDA_PREFIX/bin:$PATH
+
+# Ensure that the conda environment is activated on startup
+ENTRYPOINT ["conda", "run", "-n", "eAI", "/bin/bash"]
