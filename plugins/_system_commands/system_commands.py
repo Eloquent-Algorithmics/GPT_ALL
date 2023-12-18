@@ -17,6 +17,7 @@ from plugins.plugin_base import PluginBase
 
 
 class SystemCommandsPlugin(PluginBase):
+
     """
     This class defines the System Commands plugin.
     """
