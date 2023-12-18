@@ -1,3 +1,11 @@
+
+# !/usr/bin/env python
+# coding: utf-8
+# Filename: plugin_enabled.py
+# Path: plugins/plugin_enabled.py
+# Last modified by: ExplorerGT92
+# Last modified on: 2023/12/18
+
 """
 Enable plugins.
 """
@@ -8,6 +16,7 @@ import inspect
 from plugins.plugin_base import PluginBase
 
 
+# Defines the enable plugins function
 async def enable_plugins(available_functions, tools):
 
     """
