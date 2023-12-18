@@ -27,7 +27,7 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
     query_params["apiKey"] = api_key
 
     # Debug print
-    # console.print(f"Making request to NewsAPI with params: {query_params}")  # Debug print
+    # console.print(f"Making request to NewsAPI with params: {query_params}")
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -38,16 +38,23 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
                 articles = data.get("articles")
                 if articles:
                     for article in articles:
-                        news.append({
-                            "title": article.get("title", ""),
-                            "description": article.get("description", ""),
-                            "snippet": (article.get("content", "")[:500] + "...") if article.get("content") else "",
-                            "link": article.get("url", "")
-                        })
+                        news.append(
+                            {
+                                "title": article.get("title", ""),
+                                "description": article.get("description", ""),
+                                "snippet": (
+                                    (article.get("content", "")[:500] + "...")
+                                    if article.get("content") else ""
+                                ),
+                                "link": article.get("url", "")
+                            }
+                        )
                 elif data.get("status") == "error":
                     # Handle the case where the API returns an error
                     error_message = data.get('message', 'Unknown error')
-                    console.print(f"NewsAPI.org returned an error: {error_message}")
+                    console.print(
+                        f"NewsAPI.org returned an error: {error_message}"
+                    )
                     return []
                 else:
                     console.print(f"Error fetching news: Status {res.status}")

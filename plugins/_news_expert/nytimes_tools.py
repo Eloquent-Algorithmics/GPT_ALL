@@ -38,7 +38,7 @@ async def get_news_from_nytimes(query: str, api_key: str, url: str) -> List:
     # Make the request to the New York Times API
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url, params=params) as res:  # Use the 'url' parameter here
+            async with session.get(url, params=params) as res:
                 res.raise_for_status()
                 data = await res.json()
                 nyt_news = []
@@ -68,7 +68,7 @@ nytimes_news_tools = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The search query for the New York Times API",
+                        "description": "The New York Times search query.",
                     },
                 },
                 "required": ["query"],

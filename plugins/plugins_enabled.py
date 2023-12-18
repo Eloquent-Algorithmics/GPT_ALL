@@ -1,3 +1,11 @@
+
+# !/usr/bin/env python
+# coding: utf-8
+# Filename: plugin_enabled.py
+# Path: plugins/plugin_enabled.py
+# Last modified by: ExplorerGT92
+# Last modified on: 2023/12/18
+
 """
 Enable plugins.
 """
@@ -8,14 +16,23 @@ import inspect
 from plugins.plugin_base import PluginBase
 
 
+# Defines the enable plugins function
 async def enable_plugins(available_functions, tools):
+
+    """
+    Enable plugins.
+
+    """
+
     plugins_folder = "plugins"
 
     # Iterate through the files in the plugins folder
     for file in os.listdir(plugins_folder):
         if file.endswith(".py") and not file.startswith("_"):
             # Import the module dynamically
-            spec = importlib.util.spec_from_file_location(file[:-3], os.path.join(plugins_folder, file))
+            spec = importlib.util.spec_from_file_location(
+                file[:-3], os.path.join(plugins_folder, file)
+            )
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 

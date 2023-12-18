@@ -13,4 +13,3 @@ echo "Downloading the SpaCy NLP model..."
 python -m spacy download en_core_web_sm
 
 echo "Installation completed."
-read -p "Press enter to continue"

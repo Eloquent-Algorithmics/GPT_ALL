@@ -4,7 +4,7 @@
 # Run command: python -m app
 # Last modified by: ExplorerGT92
 # Last modified on: 2023/12/17
-# branch: master
+# branch: voice_rec_and_tts
 
 """
 This is the main part of the script
@@ -39,6 +39,8 @@ from config import (
 )
 
 sys.path.append(str(Path(__file__).parent))
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 # Define the open_ai model
 openai_model = OPENAI_MODEL
@@ -92,10 +94,7 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
     text = kwargs.get("text", "")
 
     messages = [
-        {
-            "role": "system",
-            "content": "You are the brain of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.",
-        },
+        {"role": "system", "content": "You are the brains of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.",},
         {"role": "user", "content": question},
         {"role": "assistant", "content": text},
     ]
@@ -111,7 +110,14 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
             presence_penalty=0,
         )
 
-    return response.choices[0].message.content
+    # Check if the response has the expected structure and content
+    if (response.choices and
+            response.choices[0].message and
+            response.choices[0].message.content):
+        return response.choices[0].message.content
+    else:
+        # Handle the case where the expected content is not available
+        return "An error occurred or no content was returned."
 
 
 # Define a function to load plugins and get their tools
@@ -295,17 +301,17 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314",
-                "description": "Ask a smarter LLM that is able to understand more complex concepts and perform complex tasks to respond to more difficult requests, and verify and correct responses before they are returned as a final response.",
+                "description": "Ask a smarter AI LLM that is able to understand more complex concepts and perform complex tasks.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "temperature": {
                             "type": "integer",
-                            "description": "The temperature associated with the request: 0 for factual, up to 2 for very creative.",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
                         },
                         "question": {
                             "type": "string",
-                            "description": "What you requesting be done with the text.",
+                            "description": "What your requesting be done with the text.",
                         },
                         "text": {
                             "type": "string",
