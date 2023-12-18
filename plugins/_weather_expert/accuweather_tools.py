@@ -87,6 +87,9 @@ class AccuWeatherPlugin(PluginBase):
         if not location:
             location = "Atlanta"
 
+        # Strip any extra quotes from the location string
+        location = location.strip('"')
+
         location_key = await self.get_location_key(location)
         if not location_key:
             return json.dumps(
