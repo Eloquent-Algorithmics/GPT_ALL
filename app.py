@@ -10,17 +10,19 @@
 This is the main part of the script
 """
 
-import sys
-from pathlib import Path
 import os
+import sys
+from datetime import datetime
+from pathlib import Path
 import json
 import asyncio
-from datetime import datetime
+from moviepy.editor import VideoFileClip
+from moviepy.editor import *
+import threading
 import importlib.util
 import inspect
 import tzlocal
 import pytz
-
 import spacy
 from openai import AsyncOpenAI
 
@@ -63,6 +65,12 @@ nlp = spacy.load("en_core_web_sm")
 console = Console()
 
 
+# Define the function to play a local video file
+def play_video(video_path):
+    clip = VideoFileClip(video_path)
+    clip.preview()
+
+
 # Define the base functions and tools
 async def get_current_date_time() -> str:
     """
@@ -94,7 +102,7 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
     text = kwargs.get("text", "")
 
     messages = [
-        {"role": "system", "content": "You are the brains of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.",},
+        {"role": "system", "content": "You are the brains of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.", },
         {"role": "user", "content": question},
         {"role": "assistant", "content": text},
     ]
@@ -272,13 +280,14 @@ async def main():
     """
     Main function.
     """
-
-    # Clear the console screen before displaying the welcome message
-    os.system("cls" if os.name == "nt" else "clear")
+    # Play the video file
+    video_path = os.path.join(os.path.dirname(__file__), 'voltron_assemble.mp4')
+    video_thread = threading.Thread(target=play_video, args=(video_path,))
+    video_thread.start()
 
     # Display the welcome message
     console.print(
-        Markdown("# 👋 Welcome to the AI Assistant 👋"),
+        Markdown("# 👋  Voltron: Defender of the Universe. A mighty robot, loved by good, feared by evil. 👋"),
         style="bold blue"
     )
 
@@ -311,7 +320,7 @@ async def main():
                         },
                         "question": {
                             "type": "string",
-                            "description": "What your requesting be done with the text.",
+                            "description": "What's requested to be done with the text.",
                         },
                         "text": {
                             "type": "string",
@@ -335,7 +344,7 @@ async def main():
 
         # Ask the user for input
         user_input = Prompt.ask(
-            "\nAsk a question ([yellow]/help[/yellow] or [bold yellow]exit or quit[/bold yellow])",
+            "\nHow can I be of assistance? ([yellow]/help[/yellow] or [bold yellow]exit or quit[/bold yellow])",
         )
 
         # Check if the user wants to exit the program
@@ -352,7 +361,7 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": "You are an AI Assistant that can answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request.",
+                "content": "You are Voltron: Defender of the Universe. A mighty robot, loved by good, feared by evil. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request.",
             },
             {"role": "user", "content": f"{user_input}"},
         ]

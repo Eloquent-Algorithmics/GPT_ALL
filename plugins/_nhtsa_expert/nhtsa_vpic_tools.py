@@ -29,13 +29,6 @@ class NHTSAVPICPlugin(PluginBase):
         """
         pass  # If no initialization is needed, otherwise add initialization code here.
 
-    async def get_vehicle_types(self):
-        """Retrieve the list of vehicle types."""
-        endpoint = f"{self.NHTSA_VPIC_URL}vehicles/GetVehicleTypesForMake/honda?format=json"
-        response = requests.get(endpoint)
-        data = response.json()
-        return data['Results']
-
     async def get_vehicle_details(self, vin):
         """Retrieve vehicle details by VIN."""
         endpoint = f"{self.NHTSA_VPIC_URL}vehicles/decodevin/{vin}?format=json"
@@ -45,13 +38,6 @@ class NHTSAVPICPlugin(PluginBase):
 
     def get_tools(self):
         nhtsa_vpic_tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_vehicle_types",
-                    "description": "Retrieve the list of vehicle types.",
-                },
-            },
             {
                 "type": "function",
                 "function": {
@@ -74,7 +60,6 @@ class NHTSAVPICPlugin(PluginBase):
         self.tools.extend(nhtsa_vpic_tools)
 
         available_functions = {
-            "get_vehicle_types": self.get_vehicle_types,
             "get_vehicle_details": self.get_vehicle_details,
         }
 

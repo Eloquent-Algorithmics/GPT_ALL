@@ -7,5 +7,3 @@ pytz==2023.3
 rich==13.7.0
 spacy==3.7.2
 tzlocal==5.2
-SpeechRecognition==3.10.1
-gtts==2.4.0
