@@ -28,20 +28,20 @@ class NewsExpertPlugin(PluginBase):
     def __init__(self):
 
         # Initialize the plugin
-        self.NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-        if self.NEWS_API_KEY is None:
+        self.news_api_key = os.getenv("NEWS_API_KEY")
+        if self.news_api_key is None:
             raise ValueError("NEWS_API_KEY not set")
 
-        self.NEWSAPI_ORG_URL = os.getenv("NEWSAPI_ORG_URL")
-        if self.NEWSAPI_ORG_URL is None:
+        self.newsapi_org_url = os.getenv("NEWSAPI_ORG_URL")
+        if self.newsapi_org_url is None:
             raise ValueError("NEWSAPI_ORG_URL not set")
 
-        self.NYT_API_KEY = os.getenv("NYT_API_KEY")
-        if self.NYT_API_KEY is None:
+        self.nyt_api_key = os.getenv("NYT_API_KEY")
+        if self.nyt_api_key is None:
             raise ValueError("NYT_API_KEY not set")
 
-        self.NYT_ARTICLE_SEARCH_URL = os.getenv("NYT_ARTICLE_SEARCH_URL")
-        if self.NYT_ARTICLE_SEARCH_URL is None:
+        self.nyt_article_search_url = os.getenv("NYT_ARTICLE_SEARCH_URL")
+        if self.nyt_article_search_url is None:
             raise ValueError("NYT_ARTICLE_SEARCH_URL not set")
 
         super().__init__()
@@ -51,11 +51,19 @@ class NewsExpertPlugin(PluginBase):
         pass
 
     async def get_all_news(self, **kwargs) -> List:
-        
+        """
+        Returns news articles from NewsAPI.org and the New York Times API.
+
+        """
+
         query_params = kwargs
 
-        newsapi_news = await get_news_from_newsapi(self.NEWSAPI_ORG_URL, self.NEWS_API_KEY, **query_params)
-        nytimes_news = await get_news_from_nytimes(query_params["q"], self.NYT_API_KEY, self.NYT_ARTICLE_SEARCH_URL)
+        newsapi_news = await get_news_from_newsapi(
+            self.newsapi_org_url, self.news_api_key, **query_params
+        )
+        nytimes_news = await get_news_from_nytimes(
+            query_params["q"], self.nyt_article_search_url, self.nyt_api_key
+        )
 
         return newsapi_news + nytimes_news
 
@@ -65,7 +73,7 @@ class NewsExpertPlugin(PluginBase):
                 "type": "function",
                 "function": {
                     "name": "get_all_news",
-                    "description": "Aggregate news articles from NewsAPI.org and the New York Times API.",
+                    "description": "Aggregate news articles from NewsAPI.org and NYTimes.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -91,11 +99,11 @@ class NewsExpertPlugin(PluginBase):
                             },
                             "from": {
                                 "type": "string",
-                                "description": "Optional Date of oldest article.",
+                                "description": "Date of oldest article.",
                             },
                             "to": {
                                 "type": "string",
-                                "description": "Optional Date of newest article.",
+                                "description": "Today's date.",
                             },
                         },
                         "required": ["q"],
@@ -106,7 +114,7 @@ class NewsExpertPlugin(PluginBase):
                 "type": "function",
                 "function": {
                     "name": "get_news_from_newsapi",
-                    "description": "Fetch news articles from NewsAPI.org API based on a query.",
+                    "description": "Fetch news articles from NewsAPI.org API.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -127,11 +135,11 @@ class NewsExpertPlugin(PluginBase):
                             },
                             "from": {
                                 "type": "string",
-                                "description": "Optional Date of oldest article.",
+                                "description": "Date of oldest article.",
                             },
                             "to": {
                                 "type": "string",
-                                "description": "Optional Date of newest article.",
+                                "description": "Todays date.",
                             },
                         },
                         "required": ["q"],
@@ -142,13 +150,13 @@ class NewsExpertPlugin(PluginBase):
                 "type": "function",
                 "function": {
                     "name": "get_news_from_nyt",
-                    "description": "Fetch news from New York Times API based on a query.",
+                    "description": "Fetch news from New York Times API.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "The search query for the New York Times API.",
+                                "description": "Query for New York Times.",
                             },
                         },
                         "required": ["query"],
@@ -161,8 +169,12 @@ class NewsExpertPlugin(PluginBase):
 
         available_functions = {
             "get_all_news": self.get_all_news,
-            "get_news_from_newsapi": lambda **kwargs: get_news_from_newsapi(self.NEWSAPI_ORG_URL, self.NEWS_API_KEY, **kwargs),
-            "get_news_from_nyt": lambda **kwargs: get_news_from_nytimes(kwargs["query"], self.NYT_API_KEY, self.NYT_ARTICLE_SEARCH_URL),
+            "get_news_from_newsapi": lambda **kwargs: get_news_from_newsapi(
+                self.newsapi_org_url, self.news_api_key, **kwargs
+            ),
+            "get_news_from_nyt": lambda **kwargs: get_news_from_nytimes(
+                kwargs["query"], self.nyt_api_key, self.nyt_article_search_url
+            ),
         }
 
         return available_functions, self.tools
