@@ -17,14 +17,15 @@ from pathlib import Path
 import json
 import asyncio
 import argparse
-# import threading
+import threading
 import importlib.util
 import inspect
 from moviepy.editor import VideoFileClip
-import tzlocal
+from openai import AsyncOpenAI
 import pytz
 import spacy
-from openai import AsyncOpenAI
+import tzlocal
+import tiktoken
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -66,90 +67,18 @@ nlp = spacy.load("en_core_web_sm")
 console = Console()
 
 
-# Define the function to play a local video file
 def play_video(video_path):
     """
-    This function plays a local video file.
+    This function plays a local video file in a separate thread.
     """
-    clip = VideoFileClip(video_path)
-    clip.preview()
+    def video_player(path):
+        clip = VideoFileClip(path)
+        clip.preview()
+        clip.close()
 
-
-# Function to save the conversation history to a JSON file
-def save_conversation_history(history, history_file_path):
-    """
-    Save the conversation history to a JSON file.
-
-    Args:
-        history (list): The conversation history.
-        history_file_path (str): The path to the JSON file.
-
-    Returns:
-        None
-    """
-    with open(history_file_path, 'w', encoding='utf-8') as history_file:
-        json.dump(history, history_file, indent=4)
-
-
-# Function to load the conversation history from a JSON file
-def load_conversation_history(history_file_path):
-    """
-    Load the conversation history from a JSON file.
-
-    Args:
-        history_file_path (str): The path to the JSON file.
-
-    Returns:
-        list: The conversation history.
-    """
-
-    if os.path.exists(history_file_path):
-        with open(history_file_path, 'r', encoding='utf-8') as history_file:
-            return json.load(history_file)
-    return []
-
-
-# Function to save function call responses to individual JSON files
-def save_function_response(function_name, response, folder='returns'):
-    """
-    Save function call responses to individual JSON files.
-
-    Args:
-        function_name (str): The name of the function.
-        response (dict): The function response.
-        folder (str): The folder to save the response to.
-
-    Returns:
-        None
-    """
-    os.makedirs(folder, exist_ok=True)
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
-    file_path = os.path.join(folder, f'{function_name}_{timestamp}.json')
-    with open(file_path, 'w', encoding='utf-8') as file:
-        json.dump(response, file, indent=4)
-
-
-# Function to load function call responses from individual JSON files
-def load_function_responses(returns_directory_path):
-    """
-    Load function call responses from individual JSON files.
-
-    Args:
-        returns_directory_path (str): The path to the returns directory.
-
-    Returns:
-        list: The function responses.
-
-    """
-    function_responses = []
-    for filename in os.listdir(returns_directory_path):
-        if filename.endswith('.json'):
-            with open(os.path.join(
-                returns_directory_path, filename), 'r', encoding='utf-8'
-            ) as file:
-                response_data = json.load(file)
-                function_responses.append(response_data)
-    return function_responses
+    # Create a thread to play the video
+    video_thread = threading.Thread(target=video_player, args=(video_path,))
+    video_thread.start()
 
 
 # Define the base functions and tools
@@ -238,12 +167,88 @@ async def load_plugins_and_get_tools(available_functions, tools):
                         # Initialize the plugin
                         await plugin.initialize()
                         # Get the tools from the plugin
-                        plugin_available_functions, plugin_tools = plugin.get_tools()
+                        plugin_available_functions, \
+                            plugin_tools = plugin.get_tools()
                         # Add the plugin's functions and tools
                         available_functions.update(plugin_available_functions)
                         tools.extend(plugin_tools)
 
     return available_functions, tools
+
+
+# Define the assistant prompt
+ASSISTANT_PROMPT = "You are Voltron. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request."
+
+
+# Define the function to join messages
+def join_messages(memory: list[dict]):
+    """
+    This function joins messages.
+    """
+    text = ""
+    for m in memory:
+        content = m.get("content")
+        if content is not None:
+            text += content + "\n"
+    return text
+
+
+# Define the function to check if the context is under the token limit
+def check_under_context_limit(text: str, limit: int, model: str):
+    """
+    This function checks if the context is under the token limit.
+    """
+    enc = tiktoken.encoding_for_model(model)
+    numtokens = len(enc.encode(text))
+    return numtokens <= limit
+
+
+# Define the function to follow the conversation
+async def follow_conversation(
+        user_text: str,
+        memory: list[dict],
+        mem_size: int,
+        model: str
+):
+    """
+    This function follows the conversation.
+    """
+    ind = min(mem_size, len(memory))
+    if ind == 0:
+        memory = [{"role": "system", "content": ASSISTANT_PROMPT}]
+    memory.append({"role": "user", "content": user_text})
+    while not check_under_context_limit(
+        join_messages(memory),
+        128000,
+        model
+    ) and ind > 1:
+        ind -= 1
+        memory.pop(0)  # Remove the oldest messages if the limit is exceeded
+    response = await base_client.chat.completions.create(
+        model=model,
+        messages=memory[-ind:]
+    )
+    # Check if the response has the expected structure and content
+    if (response.choices and
+            response.choices[0].message and
+            response.choices[0].message.content is not None):
+        tr = response.choices[0].message.content
+        memory.append(
+            {
+                "role": "assistant",
+                "content": tr
+            }
+        )
+    else:
+        # Handle the case where the expected content is not available
+        memory.append(
+            {
+                "role": "assistant",
+                "content": "I'm not sure how to respond to that."
+            }
+        )
+
+    return memory
 
 
 # Define the display_help function
@@ -263,39 +268,33 @@ def display_help(tools):
     console.print()
 
 
-# Define the run_conversation function
+# Define the run_conversation function with memory
 async def run_conversation(
     messages,
     tools,
     available_functions,
     original_user_input,
-    history_file_path,
-    returns_directory_path,
+    memory,
+    mem_size,
     **kwargs
 ):
     """
-    Run a conversation with the model.
+    Run the conversation.
     """
-    returns_directory_path = 'returns'
+    memory = await follow_conversation(
+        user_text=original_user_input,
+        memory=memory,
+        mem_size=mem_size,
+        model=openai_defaults["model"]
+    )
+    memory.append({"role": "user", "content": original_user_input})
 
-    # Load the conversation history
-    conversation_history = load_conversation_history(history_file_path)
+    while len(json.dumps(memory)) > 128000:
+        memory.pop(0)
 
-    # Check if the system message is already in the conversation history
-    if not any(message['role'] == 'system' for message in conversation_history):
-        # If not, add the system message at the start of the conversation
-        conversation_history.insert(0, messages[0])
-
-    # Append the new user message to the conversation history
-    conversation_history.append(messages[1])
-
-    # Save the updated conversation history
-    save_conversation_history(conversation_history, history_file_path)
-
-    # Send the conversation and available functions to the model
     response = await base_client.chat.completions.create(
         model=openai_defaults["model"],
-        messages=conversation_history,  # Use the updated conversation history
+        messages=memory[-mem_size:],
         tools=tools,
         tool_choice="auto",
         temperature=openai_defaults["temperature"],
@@ -305,25 +304,26 @@ async def run_conversation(
         presence_penalty=openai_defaults["presence_penalty"],
     )
     response_message = response.choices[0].message
-    tool_calls = response_message.tool_calls
+    tool_calls = response_message.tool_calls if hasattr(
+        response_message,
+        'tool_calls'
+    ) else []
 
-    # Append the assistant's response to the conversation history
-    conversation_history.append({
-        "role": "assistant",
-        "content": response_message.content or "No content returned."
-    })
+    if response_message.content is not None:
+        memory.append(
+            {
+                "role": "assistant",
+                "content": response_message.content
+            }
+        )
 
-    # Save the updated conversation history
-    save_conversation_history(conversation_history, history_file_path)
-
-    # Check if the model wanted to call a function
     if tool_calls:
-        # Send each function's response to the model
+        messages.append(response_message)
+        executed_tool_call_ids = []
+
         for tool_call in tool_calls:
-            # Extract the function name from the tool_call object
             function_name = tool_call.function.name
 
-            # Check if the function is available before calling it
             if function_name not in available_functions:
                 console.print(
                     f"Function {function_name} is not available.",
@@ -332,13 +332,10 @@ async def run_conversation(
                 continue
 
             function_to_call = available_functions[function_name]
-
-            # Extract the function arguments from the tool_call object
             function_args = json.loads(tool_call.function.arguments)
 
-            # Call the asynchronous function
             console.print(
-                f"Calling function:{function_name} with args: {function_args}",
+                f"Calling function: {function_name} args: {function_args}",
                 style="yellow",
             )
             function_response = await function_to_call(**function_args)
@@ -347,43 +344,44 @@ async def run_conversation(
                 style="yellow",
             )
 
-            # Save the function response to a new JSON file
-            save_function_response(function_name, function_response)
-
-            # Ensure the function response is a string
             if function_response is None:
-                function_response_message_content = "No response from function"
+                function_response = "No response received from the function."
             elif not isinstance(function_response, str):
-                function_response_message_content = json.dumps(
-                    function_response
-                )
-            else:
-                function_response_message_content = function_response
+                function_response = json.dumps(function_response)
 
             function_response_message = {
                 "role": "tool",
                 "name": function_name,
-                "content": function_response_message_content,
+                "content": function_response,
                 "tool_call_id": tool_call.id,
             }
 
-            # Append the function response message to the conversation history
-            conversation_history.append(function_response_message)
+            messages.append(function_response_message)
+            executed_tool_call_ids.append(tool_call.id)
 
-        # Save the updated conversation history
-        save_conversation_history(conversation_history, history_file_path)
-
-        # Remove the 'tool' messages before making the second call
-        conversation_history = [message for message in conversation_history if message['role'] != 'tool']
-
-        # Send the updated conversation to the model
-        second_response = await base_client.chat.completions.create(
-            model=openai_defaults["model"], messages=conversation_history
+        # Ensure the next message prompts the assistant to use tool responses
+        messages.append(
+            {
+                "role": "user",
+                "content": f"With the returns from the tool calls in mind, create the best response to the user's original request that was: {original_user_input}",
+            }
         )
-        return second_response
+
+        # Create next completion ensuring to pass the updated messages array
+        second_response = await base_client.chat.completions.create(
+            model=openai_defaults["model"],
+            messages=messages,
+            tools=tools,
+            tool_choice="auto",
+            temperature=openai_defaults["temperature"],
+            top_p=openai_defaults["top_p"],
+            max_tokens=openai_defaults["max_tokens"],
+            frequency_penalty=openai_defaults["frequency_penalty"],
+            presence_penalty=openai_defaults["presence_penalty"],
+        )
+        return second_response, memory
     else:
-        # If no tool calls were made, just return the initial response
-        return response
+        return response, memory
 
 
 # Define the main function
@@ -391,6 +389,10 @@ async def main():
     """
     Main function.
     """
+
+    # Clear the console screen before displaying the welcome message
+    os.system("cls" if os.name == "nt" else "clear")
+
     # Parse command line arguments
     parser = argparse.ArgumentParser(
         description='Voltron: Defender of the Universe'
@@ -398,10 +400,17 @@ async def main():
     parser.add_argument(
         '--talk', action='store_true', help='Use TTS for the final response'
     )
+    parser.add_argument(
+        '--intro', action='store_true', help='Play the intro video at startup'
+    )
     args = parser.parse_args()
 
     # Set a flag to determine if TTS should be used
     use_tts = args.talk
+
+    # Play the intro video if the --intro argument is provided
+    if args.intro:
+        play_video('voltron_assemble.mp4')
 
     # Display the welcome message
     console.print(
@@ -460,11 +469,8 @@ async def main():
         tools
     )
 
-    # Define the path for the conversation history JSON file
-    history_file_path = 'conversation_history.json'
-
-    # Define the path for the returns directory
-    returns_directory_path = 'returns'
+    # Initialize the conversation memory
+    memory = []
 
     # Main Loop
     while True:
@@ -488,7 +494,7 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": "You are Voltron. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request.",
+                "content": ASSISTANT_PROMPT,
             },
             {"role": "user", "content": f"{user_input}"},
         ]
@@ -499,14 +505,14 @@ async def main():
             # Start the spinner
             live_spinner.start()
 
-            # Pass the query to the run_conversation function
-            final_response = await run_conversation(
-                messages,
-                tools,
-                available_functions,
-                user_input,
-                history_file_path,
-                returns_directory_path
+            # Pass the user input and memory to the run_conversation function
+            final_response, memory = await run_conversation(
+                messages=messages,
+                tools=tools,
+                available_functions=available_functions,
+                original_user_input=user_input,
+                mem_size=10,
+                memory=memory,  # Pass the memory variable correctly
             )
 
             # Stop the spinner
@@ -530,9 +536,15 @@ async def main():
             )
 
         # Remove tools from the tools list after processing
-        tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
+        tools[:] = [
+            tool for tool in tools
+            if not tool.get("function", {}).get("name", "").lower()
+            in user_input.lower()
+        ]
 
 
 # Run the main function
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(
+        main()
+    )

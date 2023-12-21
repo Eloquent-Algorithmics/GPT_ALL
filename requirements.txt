@@ -12,4 +12,5 @@ python-dotenv==1.0.0
 pytz==2023.3
 rich==13.7.0
 spacy==3.7.2
+tiktoken==0.5.2
 tzlocal==5.2
