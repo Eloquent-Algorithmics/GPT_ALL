@@ -253,7 +253,7 @@ class SystemCommandsPlugin(PluginBase):
                             },
                             "content": {
                                 "type": "string",
-                                "description": "The content to write to the script.",
+                                "description": "Content to write to the script.",
                             },
                         },
                         "required": ["file_path", "content"],
