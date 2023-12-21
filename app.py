@@ -17,8 +17,7 @@ from pathlib import Path
 import json
 import asyncio
 import argparse
-from output_methods.audio_pyttsx3 import tts_output
-import threading
+# import threading
 import importlib.util
 import inspect
 from moviepy.editor import VideoFileClip
@@ -31,6 +30,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Prompt
 
+from output_methods.audio_pyttsx3 import tts_output
 from plugins.plugin_base import PluginBase
 
 from config import (
@@ -68,8 +68,48 @@ console = Console()
 
 # Define the function to play a local video file
 def play_video(video_path):
+    """
+    This function plays a local video file.
+    """
     clip = VideoFileClip(video_path)
     clip.preview()
+
+
+# Function to save the conversation history to a JSON file
+def save_conversation_history(history, history_file_path):
+    with open(history_file_path, 'w', encoding='utf-8') as history_file:
+        json.dump(history, history_file, indent=4)
+
+
+# Function to load the conversation history from a JSON file
+def load_conversation_history(history_file_path):
+    if os.path.exists(history_file_path):
+        with open(history_file_path, 'r', encoding='utf-8') as history_file:
+            return json.load(history_file)
+    return []
+
+
+# Function to save function call responses to individual JSON files
+def save_function_response(function_name, response, folder='returns'):
+    os.makedirs(folder, exist_ok=True)
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+    file_path = os.path.join(folder, f'{function_name}_{timestamp}.json')
+    with open(file_path, 'w', encoding='utf-8') as file:
+        json.dump(response, file, indent=4)
+
+
+# Function to load function call responses from individual JSON files
+def load_function_responses(returns_directory_path):
+    """
+    Load function responses from the returns/ directory.
+    """
+    function_responses = []
+    for filename in os.listdir(returns_directory_path):
+        if filename.endswith('.json'):
+            with open(os.path.join(returns_directory_path, filename), 'r') as file:
+                response_data = json.load(file)
+                function_responses.append(response_data)
+    return function_responses
 
 
 # Define the base functions and tools
@@ -189,15 +229,35 @@ async def run_conversation(
     tools,
     available_functions,
     original_user_input,
+    history_file_path,
+    returns_directory_path,
     **kwargs
 ):
     """
     Run a conversation with the model.
+
     """
+    returns_directory_path = 'returns'
+
+    # Load the conversation history
+    conversation_history = load_conversation_history(history_file_path)
+
+    # Load function responses from the returns/ directory
+    function_responses = load_function_responses(returns_directory_path)
+
+    # Incorporate the function responses into the conversation history
+    conversation_history.extend(function_responses)
+
+    # Append the new messages to the conversation history
+    conversation_history.extend(messages)
+
+    # Save the updated conversation history
+    save_conversation_history(conversation_history, history_file_path)
+
     # Send the conversation and available functions to the model
     response = await base_client.chat.completions.create(
         model=openai_defaults["model"],
-        messages=messages,
+        messages=conversation_history,  # Use the updated conversation history
         tools=tools,
         tool_choice="auto",
         temperature=openai_defaults["temperature"],
@@ -212,11 +272,10 @@ async def run_conversation(
     # Check if the model wanted to call a function
     if tool_calls:
         # Extending conversation with a function reply
-        messages.append(response_message)
+        conversation_history.append(response_message)
 
         # Send each function's response to the model
         for tool_call in tool_calls:
-
             # Extract the function name from the tool_call object
             function_name = tool_call.function.name
 
@@ -244,6 +303,9 @@ async def run_conversation(
                 style="yellow",
             )
 
+            # Save the function response to a new JSON file
+            save_function_response(function_name, function_response)
+
             if function_response is None:
                 function_response = "No response received from the function."
             elif not isinstance(function_response, str):
@@ -254,7 +316,7 @@ async def run_conversation(
                 f"{function_response}"
             )
 
-            messages.append(
+            conversation_history.append(
                 {
                     "role": "tool",
                     "name": function_name,
@@ -264,17 +326,21 @@ async def run_conversation(
             )
 
         # Add the original user input to the conversation
-        messages.append({"role": "user", "content": original_user_input})
+        conversation_history.append({"role": "user", "content": original_user_input})
+
+        # Save the updated conversation history
+        save_conversation_history(conversation_history, history_file_path)
 
         # Send the updated conversation to the model
         second_response = await base_client.chat.completions.create(
-            model=openai_defaults["model"], messages=messages
+            model=openai_defaults["model"], messages=conversation_history
         )
         return second_response
     else:
         return response
 
 
+# Define the main function
 async def main():
     """
     Main function.
@@ -287,11 +353,6 @@ async def main():
     # Set a flag to determine if TTS should be used
     use_tts = args.talk
 
-    # Play the video file
-    video_path = os.path.join(os.path.dirname(__file__), 'voltron_assemble.mp4')
-    video_thread = threading.Thread(target=play_video, args=(video_path,))
-    video_thread.start()
-
     # Display the welcome message
     console.print(
         Markdown("# 👋  Voltron: Defender of the Universe. A mighty robot, loved by good, feared by evil. 👋"),
@@ -302,6 +363,7 @@ async def main():
     available_functions = {
         "get_current_date_time": get_current_date_time,
         "ask_chat_gpt_4_0314": ask_chat_gpt_4_0314,
+        # ... (other default functions)
     }
 
     # Define the available base tools
@@ -346,6 +408,12 @@ async def main():
         tools
     )
 
+    # Define the path for the conversation history JSON file
+    history_file_path = 'conversation_history.json'
+
+    # Define the path for the returns directory
+    returns_directory_path = 'returns'
+
     # Main Loop
     while True:
 
@@ -368,13 +436,10 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": "You are Voltron: Defender of the Universe. A mighty robot, loved by good, feared by evil. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request.",
+                "content": "You are Voltron. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request.",
             },
             {"role": "user", "content": f"{user_input}"},
         ]
-
-        # Extract the query from the user's input
-        query = user_input  # This is the user's search query
 
         # Start the spinner
         with live_spinner:
@@ -387,8 +452,9 @@ async def main():
                 messages,
                 tools,
                 available_functions,
-                original_user_input=user_input,
-                q=query
+                user_input,
+                history_file_path,
+                returns_directory_path
             )
 
             # Stop the spinner
@@ -405,7 +471,6 @@ async def main():
                 # Print the final response to the console
                 console.print("\n" + final_text, style="green")
         else:
-
             # Print an error message if the model did not return a response
             console.print(
                 "\nI'm not sure how to help with that.",
@@ -419,3 +484,163 @@ async def main():
 # Run the main function
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+"""
+The error message indicates that the `run_conversation` function is being called without the required `returns_directory_path` argument. To fix this, you need to ensure that the `returns_directory_path` argument is passed to the `run_conversation` function when it is called within the `main` function.
+
+Here is the corrected call to `run_conversation` within the `main` function:
+
+```python
+# Run the main function
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+And here is the corrected `main` function where the `run_conversation` function is called:
+
+```python
+# Define the main function
+async def main():
+    """
+    Main function.
+    """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Voltron: Defender of the Universe')
+    parser.add_argument('--talk', action='store_true', help='Use TTS for the final response')
+    args = parser.parse_args()
+
+    # Set a flag to determine if TTS should be used
+    use_tts = args.talk
+
+    # Display the welcome message
+    console.print(
+        Markdown("# 👋  Voltron: Defender of the Universe. A mighty robot, loved by good, feared by evil. 👋"),
+        style="bold blue"
+    )
+
+    # Initialize available base functions and tools
+    available_functions = {
+        "get_current_date_time": get_current_date_time,
+        "ask_chat_gpt_4_0314": ask_chat_gpt_4_0314,
+        # ... (other default functions)
+    }
+
+    # Define the available base tools
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_current_date_time",
+                "description": "Get the current date and time.",
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ask_chat_gpt_4_0314",
+                "description": "Ask a smarter AI LLM that is able to understand more complex concepts and perform complex tasks.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "temperature": {
+                            "type": "integer",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
+                        },
+                        "question": {
+                            "type": "string",
+                            "description": "What's requested to be done with the text.",
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to be analyzed",
+                        },
+                    },
+                    "required": ["question", "text"],
+                },
+            },
+        },
+    ]
+
+    # Use the load_plugins_and_get_tools function to conditionally add tools
+    available_functions, tools = await load_plugins_and_get_tools(
+        available_functions,
+        tools
+    )
+
+    # Define the path for the conversation history JSON file
+    history_file_path = 'conversation_history.json'
+
+    # Define the path for the returns directory
+    returns_directory_path = 'returns'
+
+    # Main Loop
+    while True:
+
+        # Ask the user for input
+        user_input = Prompt.ask(
+            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]exit or quit[/bold yellow])",
+        )
+
+        # Check if the user wants to exit the program
+        if user_input.lower() == "exit":
+            console.print("\nExiting the program.", style="bold red")
+            break
+
+        # Check if the user wants to see the available tools
+        elif user_input.lower() == "/tools":
+            display_help(tools)
+            continue
+
+        # Prepare the conversation messages
+        messages = [
+            {
+                "role": "system",
+                "content": "You are Voltron. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request.",
+            },
+            {"role": "user", "content": f"{user_input}"},
+        ]
+
+        # Start the spinner
+        with live_spinner:
+
+            # Start the spinner
+            live_spinner.start()
+
+            # Pass the query to the run_conversation function
+            final_response = await run_conversation(
+                messages,
+                tools,
+                available_functions,
+                user_input,
+                history_file_path,
+                returns_directory_path
+            )
+
+            # Stop the spinner
+            live_spinner.stop()
+
+        # Print the final response from the model or use TTS
+        if final_response:
+            final_text = final_response.choices[0].message.content
+            if use_tts:
+                # Use TTS to output the final response
+                console.print("\n" + final_text, style="green")
+                tts_output(final_text)
+            else:
+                # Print the final response to the console
+                console.print("\n" + final_text, style="green")
+        else:
+            # Print an error message if the model did not return a response
+            console.print(
+                "\nI'm not sure how to help with that.",
+                style="red"
+            )
+
+        # Remove tools from the tools list after processing
+        tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
+```
+
+I have added the `returns_directory_path` variable in the `main` function and passed it to the `run_conversation` function call. This should resolve the `TypeError` you were encountering.
+
+"""
