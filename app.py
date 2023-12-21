@@ -16,11 +16,12 @@ from datetime import datetime
 from pathlib import Path
 import json
 import asyncio
-from moviepy.editor import VideoFileClip
-from moviepy.editor import *
+import argparse
+from output_methods.audio_pyttsx3 import tts_output
 import threading
 import importlib.util
 import inspect
+from moviepy.editor import VideoFileClip
 import tzlocal
 import pytz
 import spacy
@@ -274,12 +275,18 @@ async def run_conversation(
         return response
 
 
-# Define the main function
 async def main():
-
     """
     Main function.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Voltron: Defender of the Universe')
+    parser.add_argument('--talk', action='store_true', help='Use TTS for the final response')
+    args = parser.parse_args()
+
+    # Set a flag to determine if TTS should be used
+    use_tts = args.talk
+
     # Play the video file
     video_path = os.path.join(os.path.dirname(__file__), 'voltron_assemble.mp4')
     video_thread = threading.Thread(target=play_video, args=(video_path,))
@@ -344,7 +351,7 @@ async def main():
 
         # Ask the user for input
         user_input = Prompt.ask(
-            "\nHow can I be of assistance? ([yellow]/help[/yellow] or [bold yellow]exit or quit[/bold yellow])",
+            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]exit or quit[/bold yellow])",
         )
 
         # Check if the user wants to exit the program
@@ -353,7 +360,7 @@ async def main():
             break
 
         # Check if the user wants to see the available tools
-        elif user_input.lower() == "/help":
+        elif user_input.lower() == "/tools":
             display_help(tools)
             continue
 
@@ -387,12 +394,16 @@ async def main():
             # Stop the spinner
             live_spinner.stop()
 
-        # Print the final response from the model
+        # Print the final response from the model or use TTS
         if final_response:
-            console.print(
-                "\n" + final_response.choices[0].message.content,
-                style="green"
-            )
+            final_text = final_response.choices[0].message.content
+            if use_tts:
+                # Use TTS to output the final response
+                console.print("\n" + final_text, style="green")
+                tts_output(final_text)
+            else:
+                # Print the final response to the console
+                console.print("\n" + final_text, style="green")
         else:
 
             # Print an error message if the model did not return a response

@@ -12,10 +12,11 @@ This module is responsible for handling audio output.
 
 """
 
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 from typing import Union
 from io import BytesIO
 import pyttsx3
-# os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 import pygame
 from config import TTS_ENGINE, TTS_VOICE_ID, TTS_RATE
 

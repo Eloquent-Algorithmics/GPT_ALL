@@ -70,14 +70,22 @@ class GmailToolsPlugin(PluginBase):
         if to is None:
             to = os.getenv("GMAIL_ADDRESS")
         message = {"subject": subject, "body": body, "to": to}
-        self.create_message_and_send(message)
+        return await self.create_message_and_send(message)
 
     async def create_message_and_send(self, message):
         to = message["to"]
         subject = message["subject"]
         body = message["body"]
-        message = f"Subject: {subject}\n\n{body}"
-        message_bytes = message.encode("utf-8")
+        from_email = os.getenv("GMAIL_ADDRESS")  # Sender's email address
+
+        # Create the email message with proper headers
+        email_message = f"From: {from_email}\r\n"
+        email_message += f"To: {to}\r\n"
+        email_message += f"Subject: {subject}\r\n\r\n"
+        email_message += body
+
+        # Encode the message in base64url format
+        message_bytes = email_message.encode("utf-8")
         base64_bytes = base64.urlsafe_b64encode(message_bytes)
         base64_message = base64_bytes.decode("utf-8")
 
@@ -86,9 +94,10 @@ class GmailToolsPlugin(PluginBase):
             send_message = (
                 self.gmail_service.users().messages().send(userId="me", body=raw_message).execute()
             )
-            print(f"Message Id: {send_message['id']}")
+            return f"Message Id: {send_message['id']}"
         except HttpError as error:
             print(f"An error occurred: {error}")
+            return f"An error occurred while sending the email: {error}"
 
     async def get_next_google_calendar_event(self):
         now = datetime.datetime.utcnow().isoformat() + "Z"
@@ -127,7 +136,7 @@ class GmailToolsPlugin(PluginBase):
                 msg = self.gmail_service.users().messages().get(
                     userId='me', id=message['id']).execute()
 
-                sender, subject, body = self.extract_email_data(msg)
+                sender, subject, body = await self.extract_email_data(msg)
 
                 snippet = body[:100] if body else 'N/A'
                 emails.append({'id': message['id'], 'subject': subject,
@@ -147,7 +156,7 @@ class GmailToolsPlugin(PluginBase):
             elif header['name'].lower() == 'subject':
                 subject = header['value']
 
-        body = self._get_email_body(msg['payload'])
+        body = await self._get_email_body(msg['payload'])
         return sender, subject, body
 
     async def _get_email_body(self, payload):
@@ -156,11 +165,13 @@ class GmailToolsPlugin(PluginBase):
             body = ''
             for part in parts:
                 part_body = part['body'].get('data', '')
-                body += self._decode_base64(part_body, part['mimeType'])
+                # Await the coroutine to get the decoded body
+                body += await self._decode_base64(part_body, part['mimeType'])
             return body
         else:
             body = payload['body'].get('data', '')
-            return self._decode_base64(body)
+            # Await the coroutine to get the decoded body
+            return await self._decode_base64(body)
 
     async def _decode_base64(self, data, mime_type='text/plain'):
         try:
