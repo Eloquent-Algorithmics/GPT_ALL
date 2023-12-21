@@ -1,13 +1,15 @@
+
+# !/usr/bin/env python
+# coding: utf-8
 # Filename: nhtsa_vpic_expert.py
 # Path: plugins/_nhtsa_vpic_expert/nhtsa_vpic_expert.py
-
+# Last modified by: ExplorerGT92
+# Last modified on: 2023/12/20
 """
 This module defines the NHTSA vPIC Expert plugin.
 """
 
-import os
 import requests
-from typing import List
 from plugins.plugin_base import PluginBase
 
 
@@ -18,21 +20,20 @@ class NHTSAVPICPlugin(PluginBase):
 
     def __init__(self):
         # Initialize the plugin
-        self.NHTSA_VPIC_URL = "https://vpic.nhtsa.dot.gov/api/"
+        self.nhtsa_vpic_url = "https://vpic.nhtsa.dot.gov/api/"
         super().__init__()
 
     async def initialize(self):
         """
         Initialize the plugin.
-        This method can be used to perform any setup operations required by the plugin.
-        If no initialization is needed, you can simply pass or provide a basic implementation.
+
         """
-        pass  # If no initialization is needed, otherwise add initialization code here.
+        # pass
 
     async def get_vehicle_details(self, vin):
         """Retrieve vehicle details by VIN."""
-        endpoint = f"{self.NHTSA_VPIC_URL}vehicles/decodevin/{vin}?format=json"
-        response = requests.get(endpoint)
+        endpoint = f"{self.nhtsa_vpic_url}vehicles/decodevin/{vin}?format=json"
+        response = requests.get(endpoint, timeout=5)
         data = response.json()
         return data['Results']
 

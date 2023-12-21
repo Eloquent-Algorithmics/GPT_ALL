@@ -4,7 +4,7 @@
 # Filename: news_expert.py
 # Path: plugins\_news_expert\news_expert.py
 # Last modified by: ExplorerGT92
-# Last modified on: 2023/12/17
+# Last modified on: 2023/12/20
 
 """
 This module defines the News Expert plugin.
