@@ -375,7 +375,7 @@ async def main():
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
-        description='Voltron: Defender of the Universe'
+        description='KitchenSinkGPT - A GPT-4-turbo based Mixture of Experts AI Assistant'
     )
     parser.add_argument(
         '--talk', action='store_true', help='Use TTS for the final response'

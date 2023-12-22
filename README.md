@@ -8,18 +8,53 @@ Welcome to KitchenSinkGPT, an AI-powered assistant designed to help you navigate
     - Asynchronous parallel function calling to allow the assistant to complete multiple tool calls in a single request.
     - Leverage the power of GPT-4 for complex inquiries using tools and tool calls.
 
-- **GPT-4-0314 Interaction**:
-    - Ask the older model for a review and get the final response. Add more by creating functions to make API calls to specific "experts".
+## Available Tools
 
-- **Gemini-Pro Interaction**:
-    - Ask chat gpt to ask gemini something for you.
+- **get_current_date_time**:
+    - Get the current date and time.
+- **ask_chat_gpt_4_0314**:
+    - Ask a smarter AI language model that is able to understand more complex concepts and perform complex tasks.
+- **send_email**:
+    - Send an email message.
+- **delete_email**:
+    - Delete an email message by ID.
+- **get_emails_google**:
+    - Retrieve a list of emails from Gmail.
+- **get_next_google_calendar_event**:
+    - Get the next event from the Google Calendar.
+- **search_google**:
+    - Search Google and return results.
+- **ask_gemini_pro**:
+    - Ask Gemini Pro a question and print the response.
+- **get_all_news**:
+    - Aggregate news articles from NewsAPI.org and The New York Times.
+- **get_news_from_newsapi**:
+    - Fetch news articles from the NewsAPI.org API.
+- **get_news_from_nyt**:
+    - Fetch news from The New York Times API.
+- **get_vehicle_details**:
+    - Retrieve details of a vehicle by VIN.
+- **get_system_information**:
+    - Get information about the local system.
+- **run_system_command**:
+    - Run a system command.
+- **read_python_script**:
+    - Read a Python script.
+- **write_python_script**:
+    - Write a Python script.
+- **amend_python_script**:
+    - Amend a Python script.
+- **execute_python_script**:
+    - Execute a Python script.
+- **get_current_weather**:
+    - Get the current weather in a location.
 
 - **Plugin System**:
     - easily install new functions/tools to extend the APIs' abilities.
     - Plugins load dynamically if they are enabled via the .env
 
 - **Conversation Memory Management**: 
-    - **** >>> NEEDS WORK <<<< IT'S BEEN ABLE TO ANSWER A FEW QUESTIONS FROM PREVIOUS MESSAGES SO FAR ****
+    - **** >>> NEEDS WORK <<<< ****
 
 - **Conversation Flow**:
     - Managed flow of conversation by appending user input to memory and ensuring responses are within context limits.
@@ -31,6 +66,13 @@ Welcome to KitchenSinkGPT, an AI-powered assistant designed to help you navigate
 
 - **Environment Cleanup**:
     - Cleans up tools list after processing each request.
+
+# ⚠️ Disclamer ⚠️
+    - **Please note** some materials may not provide ***the best possible or the most optimal*** recommendations, solutions or source codes. Try to be open minded and take everything as a `step` in the `learning process`. If you encounter something to improve in the materials, **please** write your suggestions to the respected authors.
+
+    - **This version of KitchenSinkGPT is totally experimental, USE IT AT YOUR OWN RISK. Even if a lot of tests have been performed on this version some things can be buggy or some lack of functionality.**
+    
+    - This version can be driven by the community. If you want to help us improve this version don't hesitate to send a git hub issue or PR.
 
 ## Getting Started
 
@@ -55,7 +97,6 @@ cd KitchenSinkGPT
 .\install.bat
 
 ```
-
 
 ## Configuration
 
