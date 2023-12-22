@@ -55,7 +55,6 @@ class NewsExpertPlugin(PluginBase):
         Returns news articles from NewsAPI.org and the New York Times API.
 
         """
-
         query_params = kwargs
 
         newsapi_news = await get_news_from_newsapi(
