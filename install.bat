@@ -1,10 +1,10 @@
 @echo off
 
 echo Creating a new Conda environment...
-call conda create -n VoltronGPT -c conda-forge python=3.12 -y
+call conda create -n ksGPT -c conda-forge python=3.12 -y
 
 echo Activating the new Conda environment...
-call conda activate VoltronGPT
+call conda activate ksGPT
 
 echo Installing the Python requirements...
 call pip install -r requirements.txt

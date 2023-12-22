@@ -28,12 +28,14 @@ OPENAI_TEMP = float(os.getenv("OPENAI_TEMP", str(0.5)))
 
 OPENAI_TOP_P = float(os.getenv("OPENAI_TOP_P", str(0.5)))
 
+MAIN_SYSTEM_PROMPT = os.getenv("MAIN_SYSTEM_PROMPT")
+
 TTS_ENGINE = os.getenv("TTS_ENGINE")
 if TTS_ENGINE is None:
     raise ValueError("TTS_ENGINE not set")
 
 TTS_VOICE_ID = os.getenv("TTS_VOICE_ID")
 if TTS_VOICE_ID is None:
-    raise ValueError("TTS_VOICE_ID not set") 
+    raise ValueError("TTS_VOICE_ID not set")
 
 TTS_RATE = int(os.getenv("TTS_RATE", str(175)))

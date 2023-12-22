@@ -1,12 +1,12 @@
-# Code of Conduct for Gemini_Pro_CLI
+# Code of Conduct for KitchenSinkGPT
 
 ## 1. Purpose
 
-The purpose of this Code of Conduct is to provide guidelines for contributors to the Gemini_Pro_CLI projects on GitHub. We aim to create a positive and inclusive environment where all participants can contribute and collaborate effectively. By participating in this project, you agree to abide by this Code of Conduct.
+The purpose of this Code of Conduct is to provide guidelines for contributors to the KitchenSinkGPT projects on GitHub. We aim to create a positive and inclusive environment where all participants can contribute and collaborate effectively. By participating in this project, you agree to abide by this Code of Conduct.
 
 ## 2. Scope
 
-This Code of Conduct applies to all contributors, maintainers, and users of the Gemini_Pro_CLI project. It extends to all project spaces, including but not limited to issues, pull requests, code reviews, comments, and other forms of communication within the project.
+This Code of Conduct applies to all contributors, maintainers, and users of the KitchenSinkGPT project. It extends to all project spaces, including but not limited to issues, pull requests, code reviews, comments, and other forms of communication within the project.
 
 ## 3. Our Standards
 

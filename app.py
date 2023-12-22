@@ -1,3 +1,4 @@
+
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: app.py
@@ -23,30 +24,24 @@ import inspect
 from moviepy.editor import VideoFileClip
 from openai import AsyncOpenAI
 import pytz
-import spacy
 import tzlocal
 import tiktoken
-
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Prompt
-
 from output_methods.audio_pyttsx3 import tts_output
 from plugins.plugin_base import PluginBase
-
 from config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
     OPENAI_TEMP,
     OPENAI_TOP_P,
+    MAIN_SYSTEM_PROMPT,
     live_spinner,
 )
 
 sys.path.append(str(Path(__file__).parent))
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
-
-# Define the open_ai model
 openai_model = OPENAI_MODEL
 base_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 gpt4_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
@@ -60,16 +55,16 @@ openai_defaults = {
 
 }
 
-# Define the spacy model
-nlp = spacy.load("en_core_web_sm")
-
 # Define the rich console
 console = Console()
 
 
 def play_video(video_path):
     """
-    This function plays a local video file in a separate thread.
+    This function plays a intro video in a separate thread.
+
+    Args:
+        video_path (str): The path to the video file.
     """
     def video_player(path):
         clip = VideoFileClip(path)
@@ -81,7 +76,6 @@ def play_video(video_path):
     video_thread.start()
 
 
-# Define the base functions and tools
 async def get_current_date_time() -> str:
     """
     Get the current UTC date and time.
@@ -97,7 +91,6 @@ async def get_current_date_time() -> str:
     )
 
 
-# Define the ask_chat_gpt function
 async def ask_chat_gpt_4_0314(**kwargs) -> str:
     """
     Ask ChatGPT a question and return the response.
@@ -112,7 +105,7 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
     text = kwargs.get("text", "")
 
     messages = [
-        {"role": "system", "content": "You are the brains of the operation. You are built using a more advanced version of Generative AI that is called on by users and less sophisticated AIs' to answer more difficult questions, verify and correct responses before they are sent as final responses. You are able to understand more complex concepts and perform complex tasks using tools available to you.", },
+        {"role": "system", "content": "You are an AI Assistant...", },
         {"role": "user", "content": question},
         {"role": "assistant", "content": text},
     ]
@@ -138,7 +131,6 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
         return "An error occurred or no content was returned."
 
 
-# Define a function to load plugins and get their tools
 async def load_plugins_and_get_tools(available_functions, tools):
     """
     Load plugins and get their tools.
@@ -176,14 +168,9 @@ async def load_plugins_and_get_tools(available_functions, tools):
     return available_functions, tools
 
 
-# Define the assistant prompt
-ASSISTANT_PROMPT = "You are Voltron. You are an advanced AI system designed to assist users with complex tasks, answer questions and perform complex tasks using the available tools and by asking available experts questions. You are designed to assist users by using the tools available to you to gather data and complete actions required to best complete the users' request. Before providing a final response, take the time to reason and work out the best possible response for the given user request."
-
-
-# Define the function to join messages
 def join_messages(memory: list[dict]):
     """
-    This function joins messages.
+    This function joins messages for conversation memory.
     """
     text = ""
     for m in memory:
@@ -193,7 +180,6 @@ def join_messages(memory: list[dict]):
     return text
 
 
-# Define the function to check if the context is under the token limit
 def check_under_context_limit(text: str, limit: int, model: str):
     """
     This function checks if the context is under the token limit.
@@ -203,7 +189,6 @@ def check_under_context_limit(text: str, limit: int, model: str):
     return numtokens <= limit
 
 
-# Define the function to follow the conversation
 async def follow_conversation(
         user_text: str,
         memory: list[dict],
@@ -215,7 +200,7 @@ async def follow_conversation(
     """
     ind = min(mem_size, len(memory))
     if ind == 0:
-        memory = [{"role": "system", "content": ASSISTANT_PROMPT}]
+        memory = [{"role": "system", "content": MAIN_SYSTEM_PROMPT}]
     memory.append({"role": "user", "content": user_text})
     while not check_under_context_limit(
         join_messages(memory),
@@ -251,7 +236,6 @@ async def follow_conversation(
     return memory
 
 
-# Define the display_help function
 def display_help(tools):
     """
     Display the available tools.
@@ -268,7 +252,6 @@ def display_help(tools):
     console.print()
 
 
-# Define the run_conversation function with memory
 async def run_conversation(
     messages,
     tools,
@@ -363,7 +346,7 @@ async def run_conversation(
         messages.append(
             {
                 "role": "user",
-                "content": f"With the returns from the tool calls in mind, create the best response to the user's original request that was: {original_user_input}",
+                "content": f"With the data returned from the tool calls, generate the second response to the original request that was: {original_user_input}, that makes use of the tool responses.",
             }
         )
 
@@ -384,16 +367,13 @@ async def run_conversation(
         return response, memory
 
 
-# Define the main function
 async def main():
     """
     Main function.
     """
 
-    # Clear the console screen before displaying the welcome message
     os.system("cls" if os.name == "nt" else "clear")
 
-    # Parse command line arguments
     parser = argparse.ArgumentParser(
         description='Voltron: Defender of the Universe'
     )
@@ -401,21 +381,18 @@ async def main():
         '--talk', action='store_true', help='Use TTS for the final response'
     )
     parser.add_argument(
-        '--intro', action='store_true', help='Play the intro video at startup'
+        '--intro', action='store_true', help='Play an intro video at startup'
     )
     args = parser.parse_args()
 
-    # Set a flag to determine if TTS should be used
     use_tts = args.talk
 
-    # Play the intro video if the --intro argument is provided
     if args.intro:
-        play_video('voltron_assemble.mp4')
+        play_video('intro_video.mp4')
 
-    # Display the welcome message
     console.print(
         Markdown(
-            "# 👋  Voltron: Defender of the Universe. 👋"
+            "# 👋  KitchenSinkGPT 👋"
         ),
         style="bold blue"
     )
@@ -494,9 +471,12 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": ASSISTANT_PROMPT,
+                "content": MAIN_SYSTEM_PROMPT,
             },
-            {"role": "user", "content": f"{user_input}"},
+            {
+                "role": "user",
+                "content": f"{user_input}"
+            },
         ]
 
         # Start the spinner
@@ -543,7 +523,6 @@ async def main():
         ]
 
 
-# Run the main function
 if __name__ == "__main__":
     asyncio.run(
         main()
