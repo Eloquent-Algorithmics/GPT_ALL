@@ -7,7 +7,7 @@ Welcome to KitchenSinkGPT: a cutting-edge AI assistant empowered by the capabili
 KitchenSinkGPT boasts a dynamic command-line interface, embodying both power and flexibility. Engineered to harness the most recent advancements, tools, and expanded context windows available in the latest OpenAI API updates. The goal is clear and ambitious: to integrate chat GPT with an array of applications and devices, extending even to the kitchen sink (when Bluetooth-equipped), unlocking unprecedented possibilities. KitchenSinkGPT's capabilities are further amplified by a range of built-in plugins, and you're encouraged to craft your own to broaden its diverse array of functionalities.
 
 
-<br><br>
+<br>
 <details>
 <summary>Currently Included Tools</summary>
 
