@@ -1,0 +1,70 @@
+
+# !/usr/bin/env python
+# coding: utf-8
+# Filename: news_expert.py
+# Path: plugins\_news_expert\news_expert.py
+
+"""
+This module defines the News Expert plugin.
+"""
+
+import os
+from typing import List
+from plugins.plugin_base import PluginBase
+from plugins._news_expert.newsapi_tools import get_news_from_newsapi
+from plugins._news_expert.nytimes_tools import get_news_from_nytimes
+
+
+class NewsExpertPlugin(PluginBase):
+
+    # Class attribute to hold tool definitions
+    tools = []
+
+    def __init__(self):
+        self.news_api_key = os.getenv("NEWS_API_KEY")
+        self.newsapi_org_url = os.getenv("NEWSAPI_ORG_URL")
+        self.nyt_api_key = os.getenv("NYT_API_KEY")
+        self.nyt_article_search_url = os.getenv("NYT_ARTICLE_SEARCH_URL")
+
+        if not all([self.news_api_key, self.newsapi_org_url, self.nyt_api_key, self.nyt_article_search_url]):
+            raise ValueError("One or more required environment variables are not set")
+
+        super().__init__()
+
+    def register_tool(self, func):
+        # Decorator to add tool metadata to the tools list
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        wrapper.tool_metadata = {
+            "type": "function",
+            "function": {
+                "name": func.__name__,
+                "description": func.__doc__,
+                "parameters": func.__annotations__,
+                # Add more metadata if needed
+            },
+        }
+        NewsExpertPlugin.tools.append(wrapper.tool_metadata)
+        return wrapper
+
+    @register_tool
+    async def get_all_news(self, **kwargs) -> List:
+        """
+        Returns news articles from NewsAPI.org and the New York Times API.
+        """
+        query_params = kwargs
+
+        newsapi_news = await get_news_from_newsapi(
+            self.newsapi_org_url, self.news_api_key, **query_params
+        )
+        nytimes_news = await get_news_from_nytimes(
+            query_params["q"], self.nyt_article_search_url, self.nyt_api_key
+        )
+
+        return newsapi_news + nytimes_news
+
+    def get_tools(self):
+        available_functions = {
+            "get_all_news": self.get_all_news,
+        }
+        return available_functions, self.tools

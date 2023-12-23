@@ -1,4 +1,3 @@
-
 # Filename: gemini_pro_tools.py
 # Path: plugins\_google_vertex\gemini_pro_tools.py
 """
@@ -10,12 +9,10 @@ from plugins.plugin_base import PluginBase
 
 
 class GeminiProToolsPlugin(PluginBase):
+
+
     def __init__(self):
-
-        self.api_key = os.getenv("GEMINI_API_KEY")
-        if self.api_key is None:
-            raise ValueError("GEMINI_API_KEY not set in the environment variables.")
-
+        self.api_key = os.environ.get("GEMINI_PRO_API_KEY")
         genai.configure(api_key=self.api_key)
 
         self.model = genai.GenerativeModel(model_name="gemini-pro", generation_config=self.default_generation_config(), safety_settings=self.default_safety_settings())

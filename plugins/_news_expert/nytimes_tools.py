@@ -3,36 +3,31 @@
 # coding: utf-8
 # Filename: nytimes_tools.py
 # Path: plugins\_news_expert\nytimes_tools.py
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/17
 
 """
-This module contains functions to fetch news from New York Times.
+This module contains functions to fetch
+news articles from New York Times API based on a query.
 """
-
 from typing import List
 import aiohttp
-from rich.console import Console
-
-# Initialize the rich console
-console = Console()
 
 
-# Define the function to fetch news from New York Times
-async def get_news_from_nytimes(query: str, api_key: str, url: str) -> List:
-
+async def get_news_from_nytimes(
+        query: str,
+        url: str,
+        nyt_api_key: str
+) -> List:
     """
-    This function fetches news from New York Times based on a query.
+    This function fetches news articles from New York Times based on a query.
     :param query: The search query for the New York Times API
-    :param api_key: The API key for the New York Times API
     :param url: The URL for the New York Times API
+    :param nyt_api_key: The API key for the New York Times API
     :return: A list of news articles
     """
-
     # Define the parameters for the request
     params = {
         "q": query,
-        "api-key": api_key,
+        "api-key": nyt_api_key,
     }
 
     # Make the request to the New York Times API
@@ -53,11 +48,12 @@ async def get_news_from_nytimes(query: str, api_key: str, url: str) -> List:
                     )
                 return nyt_news
         except ValueError as error:
-            console.print(f"Failed to fetch news from NYT: {error}")
+            print(f"Failed to fetch news from NYT: {error}")
             return []
 
 
-nytimes_news_tools = [
+# Define the tool metadata for this function
+get_news_from_nytimes_tools = [
     {
         "type": "function",
         "function": {
@@ -76,3 +72,8 @@ nytimes_news_tools = [
         },
     },
 ]
+
+# Define the available functions in this module
+available_functions = {
+    "get_news_from_nyt": get_news_from_nytimes,
+}

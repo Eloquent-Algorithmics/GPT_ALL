@@ -3,177 +3,110 @@
 # coding: utf-8
 # Filename: news_expert.py
 # Path: plugins\_news_expert\news_expert.py
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/20
 
 """
-This module defines the News Expert plugin.
+This contains the main module for the News Expert plugin.
 """
-
 import os
-from typing import List
+import importlib.util
+import inspect
+from pathlib import Path
 from plugins.plugin_base import PluginBase
 
 
-# Import the functions from the newsapi_tools and nytimes_tools modules
-from plugins._news_expert.newsapi_tools import get_news_from_newsapi
-from plugins._news_expert.nytimes_tools import get_news_from_nytimes
+def register_tools(cls):
+    """
+    Class decorator to register tools in the class attribute 'tools'.
+    """
+    for name, method in cls.__dict__.items():
+        if callable(method) and hasattr(method, "tool_metadata"):
+            cls.tools.append(method.tool_metadata)
+    return cls
+
+
+def register_tool(func):
+    """
+    Decorator to add tool metadata to the function.
+    """
+    func.tool_metadata = {
+        "type": "function",
+        "function": {
+            "name": func.__name__,
+            "description": func.__doc__,
+            "parameters": func.__annotations__,
+            # Add more metadata if needed
+        },
+    }
+    return func
 
 
 class NewsExpertPlugin(PluginBase):
     """
-    This class defines the News Expert plugin.
+    This class contains the main module for the News Expert plugin.
     """
+    # Class attribute to hold tool definitions
+    tools = []
+    available_functions = {}
 
     def __init__(self):
-
-        # Initialize the plugin
         self.news_api_key = os.getenv("NEWS_API_KEY")
-        if self.news_api_key is None:
-            raise ValueError("NEWS_API_KEY not set")
-
         self.newsapi_org_url = os.getenv("NEWSAPI_ORG_URL")
-        if self.newsapi_org_url is None:
-            raise ValueError("NEWSAPI_ORG_URL not set")
-
         self.nyt_api_key = os.getenv("NYT_API_KEY")
-        if self.nyt_api_key is None:
-            raise ValueError("NYT_API_KEY not set")
-
         self.nyt_article_search_url = os.getenv("NYT_ARTICLE_SEARCH_URL")
-        if self.nyt_article_search_url is None:
-            raise ValueError("NYT_ARTICLE_SEARCH_URL not set")
+
+        if not all([self.news_api_key, self.newsapi_org_url, self.nyt_api_key, self.nyt_article_search_url]):
+            raise ValueError("One or more required environment variables are not set")
 
         super().__init__()
 
     async def initialize(self):
-        # Initialization code if needed
-        pass
-
-    async def get_all_news(self, **kwargs) -> List:
-        """
-        Returns news articles from NewsAPI.org and the New York Times API.
-
-        """
-        query_params = kwargs
-
-        newsapi_news = await get_news_from_newsapi(
-            self.newsapi_org_url, self.news_api_key, **query_params
-        )
-        nytimes_news = await get_news_from_nytimes(
-            query_params["q"], self.nyt_article_search_url, self.nyt_api_key
-        )
-
-        return newsapi_news + nytimes_news
+        # Dynamically load tools from the scripts in the same directory
+        plugin_dir = Path(__file__).parent
+        for file_path in plugin_dir.glob('*.py'):
+            if file_path.name != 'news_expert.py':  # Skip the main plugin script
+                spec = importlib.util.spec_from_file_location(file_path.stem, file_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                # Update available_functions with functions from the module
+                for name, func in inspect.getmembers(module, inspect.isfunction):
+                    if hasattr(func, 'tool_metadata'):
+                        self.tools.append(func.tool_metadata)
+                        self.available_functions[name] = func
 
     def get_tools(self):
-        news_anchor_tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_all_news",
-                    "description": "Aggregate news articles from NewsAPI.org and NYTimes.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "q": {
-                                "type": "string",
-                                "description": "Query to return news stories",
-                            },
-                            "language": {
-                                "type": "string",
-                                "description": "Language of News",
-                                "enum": ["en", "es"],
-                                "default": "en",
-                            },
-                            "pageSize": {
-                                "type": "integer",
-                                "description": "Page Size",
-                                "default": 10,
-                            },
-                            "page": {
-                                "type": "integer",
-                                "description": "Page Number",
-                                "default": 1,
-                            },
-                            "from": {
-                                "type": "string",
-                                "description": "Date of oldest article.",
-                            },
-                            "to": {
-                                "type": "string",
-                                "description": "Today's date.",
-                            },
-                        },
-                        "required": ["q"],
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_news_from_newsapi",
-                    "description": "Fetch news articles from NewsAPI.org API.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "q": {
-                                "type": "string",
-                                "description": "Query to return news stories",
-                            },
-                            "language": {
-                                "type": "string",
-                                "description": "Language of News",
-                                "enum": ["en", "es"],
-                                "default": "en",
-                            },
-                            "pageSize": {
-                                "type": "integer",
-                                "description": "Page Size",
-                                "default": 10,
-                            },
-                            "from": {
-                                "type": "string",
-                                "description": "Date of oldest article.",
-                            },
-                            "to": {
-                                "type": "string",
-                                "description": "Todays date.",
-                            },
-                        },
-                        "required": ["q"],
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_news_from_nyt",
-                    "description": "Fetch news from New York Times API.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "Query for New York Times.",
-                            },
-                        },
-                        "required": ["query"],
-                    },
-                },
-            },
-        ]
+        # Return the dynamically loaded tools
+        return self.available_functions, self.tools
 
-        self.tools.extend(news_anchor_tools)
+    async def news_anchor(self, query: str) -> str:
+        """
+        Fetch and summarize news articles from all available sources based on the user's query.
+        """
+        news_articles = []
+        # Assume get_news_from_newsapi and get_news_from_nyt are loaded and available
+        if 'get_news_from_newsapi' in self.available_functions:
+            news_articles.extend(await self.available_functions['get_news_from_newsapi'](self.newsapi_org_url, self.news_api_key, q=query))
+        if 'get_news_from_nyt' in self.available_functions:
+            news_articles.extend(await self.available_functions['get_news_from_nyt'](query, self.nyt_article_search_url, self.nyt_api_key))
 
-        available_functions = {
-            "get_all_news": self.get_all_news,
-            "get_news_from_newsapi": lambda **kwargs: get_news_from_newsapi(
-                self.newsapi_org_url, self.news_api_key, **kwargs
-            ),
-            "get_news_from_nyt": lambda **kwargs: get_news_from_nytimes(
-                kwargs["query"], self.nyt_api_key, self.nyt_article_search_url
-            ),
-        }
+        # Summarize the articles (this is a placeholder, you'll need to implement the summarization logic)
+        summary = "Summary of articles:\n" + "\n".join([article['title'] for article in news_articles])
+        return summary
 
-        return available_functions, self.tools
+
+# Define the tool metadata for the news_anchor method
+NewsExpertPlugin.news_anchor.tool_metadata = {
+    "type": "function",
+    "function": {
+        "name": "news_anchor",
+        "description": "Fetch and summarize news articles from all available sources based on the user's query.",
+        "parameters": {
+            "query": {
+                "type": "string",
+                "description": "The search query for news articles.",
+            },
+        },
+    },
+}
+
+# Register the tools after defining all methods
+NewsExpertPlugin = register_tools(NewsExpertPlugin)

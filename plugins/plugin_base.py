@@ -2,13 +2,10 @@
 # coding: utf-8
 # Filename: plugin_base.py
 # Path: plugins/plugin_base.py
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/18
 
 """Base class for plugins."""
 
 
-# plugin_base.py
 class PluginBase:
     """
     Base class for plugins.

@@ -3,8 +3,6 @@
 # coding: utf-8
 # Filename: newsapi_tools.py
 # Path: plugins\_news_expert\newsapi_tools.py
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/17
 
 """
 Tools for interacting with NewsAPI.org
@@ -33,6 +31,7 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
         try:
             async with session.get(url, params=query_params, timeout=5) as res:
                 data = await res.json()
+                # Debug print
                 # console.print(f"Received response from NewsAPI: {data}")
                 news = []
                 articles = data.get("articles")
@@ -81,7 +80,8 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
         return []
 
 
-newsapi_tools = [
+# Define the tool metadata for this function
+get_news_from_newsapi_tools = [
     {
         "type": "function",
         "function": {
@@ -120,3 +120,8 @@ newsapi_tools = [
     },
 
 ]
+
+# Available functions to add from this function
+available_functions = {
+    "get_news_from_newsapi": get_news_from_newsapi,
+}

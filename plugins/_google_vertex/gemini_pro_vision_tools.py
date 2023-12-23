@@ -1,16 +1,17 @@
 # Filename: gemini_pro_vision_tools.py
 # Path: plugins\_google_vertex\gemini_pro_vision_tools.py
-
+"""
+This module defines the Gemini Pro Vision Tools.
+"""
 import os
 import base64
+import google.generativeai as genai
 from vertexai.preview.generative_models import (
     GenerativeModel,
     HarmBlockThreshold,
     HarmCategory,
     Part,
 )
-
-import google.generativeai as genai
 from plugins.plugin_base import PluginBase
 
 

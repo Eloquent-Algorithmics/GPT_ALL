@@ -1,14 +1,14 @@
-
 # Filename: gemini_pro_expert.py
 # Path: plugins\_google_vertex\gemini_pro_expert.py
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/22
-
+"""
+This is the Gemini Pro Expert plugin.
+"""
 import os
 import google.generativeai as genai
 from plugins._google_vertex.gemini_pro_tools import GeminiProToolsPlugin
 from plugins._google_vertex.gemini_pro_vision_tools import GeminiProVisionToolsPlugin
 from plugins.plugin_base import PluginBase
+
 
 class GeminiProExpertPlugin(PluginBase):
 

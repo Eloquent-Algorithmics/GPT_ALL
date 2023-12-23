@@ -3,9 +3,6 @@
 # coding: utf-8
 # Filename: app.py
 # Run command: python -m app
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/21
-# branch: opening_video
 
 """
 This is the main part of the script
@@ -163,7 +160,7 @@ async def load_plugins_and_get_tools(available_functions, tools):
                             plugin_tools = plugin.get_tools()
                         # Add the plugin's functions and tools
                         available_functions.update(plugin_available_functions)
-                        tools.extend(plugin_tools)
+                        tools.extend(plugin_tools)  # Update this line
 
     return available_functions, tools
 
@@ -401,10 +398,10 @@ async def main():
     available_functions = {
         "get_current_date_time": get_current_date_time,
         "ask_chat_gpt_4_0314": ask_chat_gpt_4_0314,
-        # ... (other default functions)
+        # Add more core functions here
     }
 
-    # Define the available base tools
+    # Define the available core tools
     tools = [
         {
             "type": "function",
