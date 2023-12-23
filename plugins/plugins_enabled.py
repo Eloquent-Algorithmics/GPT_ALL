@@ -14,6 +14,7 @@ from plugins.plugin_base import PluginBase
 # Configure logging to output to the console
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 # Defines the enable plugins function
 async def enable_plugins(available_functions, tools):
     """

@@ -10,6 +10,7 @@ This is the main part of the script
 
 import os
 import sys
+import logging
 from datetime import datetime
 from pathlib import Path
 import json
@@ -39,6 +40,10 @@ from config import (
 
 sys.path.append(str(Path(__file__).parent))
 
+# Configure logging to output to the console
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Define the OpenAI API clients
 openai_model = OPENAI_MODEL
 base_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 gpt4_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
@@ -134,35 +139,53 @@ async def load_plugins_and_get_tools(available_functions, tools):
     """
     # Define the plugins folder
     plugins_folder = "plugins"
+    logging.info("Starting to load plugins...")
 
     # Iterate through the files and subdirectories in the plugins folder
     for file_path in Path(plugins_folder).rglob("*.py"):
         file = file_path.name
         if not file.startswith("_"):
-
+            logging.info(f"Attempting to load plugin file: {file_path}")
             # Import the module dynamically
             spec = importlib.util.spec_from_file_location(file[:-3], file_path)
             module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            try:
+                spec.loader.exec_module(module)
+            except Exception as e:
+                logging.error(f"Failed to import module {file}: {e}")
+                continue
 
             # Find the plugin class
             for _, cls in inspect.getmembers(module, inspect.isclass):
                 if issubclass(cls, PluginBase) and cls is not PluginBase:
+                    logging.debug(f"Found plugin class: {cls.__name__}")
                     # Check if the plugin is enabled
                     env_var_name = f"ENABLE_{cls.__name__.upper()}"
-                    if os.getenv(env_var_name, "false").lower() == "true":
+                    plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"
+                    logging.debug(f"Environment variable {env_var_name} is set to {plugin_enabled}")
+                    if plugin_enabled:
+                        logging.debug(f"Initializing plugin: {cls.__name__}")
                         # Instantiate the plugin
                         plugin = cls()
                         # Initialize the plugin
                         await plugin.initialize()
+                        logging.debug(f"Plugin {cls.__name__} initialized.")
                         # Get the tools from the plugin
-                        plugin_available_functions, \
-                            plugin_tools = plugin.get_tools()
-                        # Add the plugin's functions and tools
+                        plugin_available_functions, plugin_tools = plugin.get_tools()
                         available_functions.update(plugin_available_functions)
-                        tools.extend(plugin_tools)  # Update this line
+                        logging.debug(f"Plugin {cls.__name__} tools: {plugin_tools}")
+                        tools.extend(plugin_tools)
+                        logging.debug(f"Plugin {cls.__name__} tools added.")
+                    else:
+                        logging.debug(f"Plugin {cls.__name__} is not enabled.")
+                else:
+                    logging.debug(f"Skipping non-PluginBase class: {cls.__name__}")
 
+    logging.info("Finished loading plugins.")
     return available_functions, tools
+
+# The following line should be part of the code where you want to log the tool metadata
+# logging.debug("Registered tool metadata: %s", func.tool_metadata)
 
 
 def join_messages(memory: list[dict]):
@@ -368,6 +391,7 @@ async def main():
     """
     Main function.
     """
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     os.system("cls" if os.name == "nt" else "clear")
 

@@ -3,12 +3,18 @@
 # Filename: plugin_base.py
 # Path: plugins/plugin_base.py
 
-"""Base class for plugins."""
+"""
+Base class for the plugins.
+"""
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
 
 class PluginBase:
     """
-    Base class for plugins.
+    Plugin Base Class.
     """
     def __init__(self, **kwargs):
         self.tools = []
