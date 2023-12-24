@@ -9,10 +9,10 @@ import os
 import importlib.util
 import inspect
 import logging
+from rich.console import Console
 from plugins.plugin_base import PluginBase
 
-# Configure logging to output to the console
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+console = Console()
 
 
 # Defines the enable plugins function
@@ -28,7 +28,8 @@ async def enable_plugins(available_functions, tools):
         for file in files:
             if file.endswith(".py") and not file.startswith("_"):
                 file_path = os.path.join(root, file)
-                logging.info(f"Found plugin file: {file_path}")
+                logging.info("Found plugin file: %s", file_path)
+
                 # Import the module dynamically
                 spec = importlib.util.spec_from_file_location(
                     file[:-3], file_path
@@ -36,20 +37,24 @@ async def enable_plugins(available_functions, tools):
                 module = importlib.util.module_from_spec(spec)
                 try:
                     spec.loader.exec_module(module)
+                    logging.info("Successfully imported module: %s", file)
                 except Exception as e:
-                    logging.error(f"Failed to import module {file}: {e}")
+                    logging.error("Failed to import module %s: %s", file, e)
                     continue
 
                 # Find the plugin class
                 for _, cls in inspect.getmembers(module, inspect.isclass):
                     if issubclass(cls, PluginBase) and cls is not PluginBase:
-                        logging.info(f"Found plugin class: {cls.__name__}")
+                        logging.info("Found plugin class: %s", cls.__name__)
+
                         # Check if the plugin is enabled
-                        env_var_name = f"ENABLE_{cls.__name__.upper()}"
-                        plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"
-                        logging.info(f"Environment variable {env_var_name} is set to {plugin_enabled}")
+                        env_var_name = "ENABLE_%s" % cls.__name__.upper()
+                        plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"  # Define plugin_enabled here
+                        logging.info("Environment variable %s is set to %s", env_var_name, plugin_enabled)
+
                         if plugin_enabled:
-                            logging.info(f"Enabling plugin: {cls.__name__}")
+                            logging.info("Enabling plugin: %s", cls.__name__)
+
                             # Instantiate the plugin
                             plugin = cls()
                             # Initialize the plugin
@@ -57,10 +62,12 @@ async def enable_plugins(available_functions, tools):
                             # Get the tools from the plugin
                             plugin_tools = plugin.get_tools()
                             # Add the plugin's functions and tools
-                            available_functions.update(plugin_tools)
-                            tools.extend(plugin_tools.values())
+                            available_functions.update(plugin.get_available_functions())
+                            tools.extend(plugin_tools)
+                            logging.info("Enabled plugin: %s with tools: %s", cls.__name__, plugin_tools)
                         else:
-                            logging.info(f"Plugin {cls.__name__} is not enabled.")
+                            logging.info("Plugin %s is not enabled.", cls.__name__)
 
-    logging.info("Finished enabling plugins.")
+    logging.info("Available functions: %s", available_functions)
+    logging.info("Tools: %s", tools)
     return available_functions, tools

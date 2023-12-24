@@ -14,6 +14,12 @@ load_dotenv()
 live_spinner = Live(Spinner("aesthetic", " "), auto_refresh=True)
 
 
+# Logging configuration
+LOGGING_ENABLED = os.getenv('LOGGING_ENABLED', 'false').lower() == 'true'
+LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'WARNING')
+LOGGING_FILE = os.getenv('LOGGING_FILE', None)
+LOGGING_FORMAT = os.getenv('LOGGING_FORMAT', '%(name)s - %(levelname)s - %(message)s')
+
 # Add your API keys and variables here
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_API_KEY is None:

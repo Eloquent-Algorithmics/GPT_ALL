@@ -2,22 +2,25 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: newsapi_tools.py
-# Path: plugins\_news_expert\newsapi_tools.py
-
+# Path: plugins/_news_expert/newsapi_tools.py
 """
-Tools for interacting with NewsAPI.org
-
+Tools for interacting with NewsAPI.org API.
 register for an API key @ https://newsapi.org/
-
 """
+import os
 from typing import List
 import aiohttp
 from rich.console import Console
 
 console = Console()
 
+# Define the default URL and API key as constants at the top of the file
+TOOL_URL = os.getenv("NEWSAPI_URL", "https://newsapi.org/v2/everything")
+TOOL_API_KEY = os.getenv("NEWS_API_KEY")
 
-async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
+
+# Define the functions outside the class
+async def get_news_from_newsapi(url=TOOL_URL, api_key=TOOL_API_KEY, **kwargs) -> List:
     """
     Fetch news from NewsAPI based on query parameters
     """
@@ -31,7 +34,6 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
         try:
             async with session.get(url, params=query_params, timeout=5) as res:
                 data = await res.json()
-                # Debug print
                 # console.print(f"Received response from NewsAPI: {data}")
                 news = []
                 articles = data.get("articles")
@@ -45,7 +47,7 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
                                     (article.get("content", "")[:500] + "...")
                                     if article.get("content") else ""
                                 ),
-                                "link": article.get("url", "")
+                                "link": article.get("url", "")  # Corrected key from 'newsapi_org_url' to 'url'
                             }
                         )
                 elif data.get("status") == "error":
@@ -80,8 +82,8 @@ async def get_news_from_newsapi(url, api_key, **kwargs) -> List:
         return []
 
 
-# Define the tool metadata for this function
-get_news_from_newsapi_tools = [
+# Define the tool list outside the class
+newsorg_tool_list = [
     {
         "type": "function",
         "function": {
@@ -117,11 +119,11 @@ get_news_from_newsapi_tools = [
                 "required": ["q"],
             },
         },
-    },
+    }
 
 ]
 
-# Available functions to add from this function
+# Define the available functions outside the class
 available_functions = {
     "get_news_from_newsapi": get_news_from_newsapi,
 }

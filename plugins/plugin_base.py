@@ -6,10 +6,6 @@
 """
 Base class for the plugins.
 """
-import logging
-
-
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
 
 class PluginBase:
@@ -18,6 +14,7 @@ class PluginBase:
     """
     def __init__(self, **kwargs):
         self.tools = []
+        self.available_functions = {}
         self.__dict__.update(kwargs)
 
     async def initialize(self):
@@ -26,8 +23,20 @@ class PluginBase:
         """
         raise NotImplementedError
 
+    def load_plugin_tools(self):
+        """
+        Load tools and functions from accompanying scripts.
+        """
+        raise NotImplementedError
+
     def get_tools(self):
         """
         Get the tools.
         """
         return self.tools
+
+    def get_available_functions(self):
+        """
+        Get the available functions.
+        """
+        return self.available_functions

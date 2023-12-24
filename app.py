@@ -17,8 +17,6 @@ import json
 import asyncio
 import argparse
 import threading
-import importlib.util
-import inspect
 from moviepy.editor import VideoFileClip
 from openai import AsyncOpenAI
 import pytz
@@ -28,37 +26,52 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Prompt
 from output_methods.audio_pyttsx3 import tts_output
-from plugins.plugin_base import PluginBase
+from plugins.plugins_enabled import enable_plugins
 from config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
     OPENAI_TEMP,
     OPENAI_TOP_P,
     MAIN_SYSTEM_PROMPT,
+    LOGGING_ENABLED,
+    LOGGING_LEVEL,
+    LOGGING_FILE,
+    LOGGING_FORMAT,
     live_spinner,
 )
 
 sys.path.append(str(Path(__file__).parent))
 
-# Configure logging to output to the console
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Define the rich console
+console = Console()
 
 # Define the OpenAI API clients
 openai_model = OPENAI_MODEL
 base_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 gpt4_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+# Define the default OpenAI parameters
 openai_defaults = {
     "model": OPENAI_MODEL,
     "temperature": OPENAI_TEMP,
     "top_p": OPENAI_TOP_P,
     "max_tokens": 1500,
-    "frequency_penalty": 0.5,
-    "presence_penalty": 0.5,
+    "frequency_penalty": 0,
+    "presence_penalty": 0,
 
 }
 
-# Define the rich console
-console = Console()
+# Configure logging based on the settings from config.py
+if LOGGING_ENABLED:
+    # Set the logging level based on the LOGGING_LEVEL string
+    level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
+    # Configure logging with or without a log file
+    if LOGGING_FILE:
+        logging.basicConfig(level=level, format=LOGGING_FORMAT, filename=LOGGING_FILE)
+    else:
+        logging.basicConfig(level=level, format=LOGGING_FORMAT)
+else:
+    logging.disable(logging.CRITICAL)
 
 
 def play_video(video_path):
@@ -131,61 +144,6 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
     else:
         # Handle the case where the expected content is not available
         return "An error occurred or no content was returned."
-
-
-async def load_plugins_and_get_tools(available_functions, tools):
-    """
-    Load plugins and get their tools.
-    """
-    # Define the plugins folder
-    plugins_folder = "plugins"
-    logging.info("Starting to load plugins...")
-
-    # Iterate through the files and subdirectories in the plugins folder
-    for file_path in Path(plugins_folder).rglob("*.py"):
-        file = file_path.name
-        if not file.startswith("_"):
-            logging.info(f"Attempting to load plugin file: {file_path}")
-            # Import the module dynamically
-            spec = importlib.util.spec_from_file_location(file[:-3], file_path)
-            module = importlib.util.module_from_spec(spec)
-            try:
-                spec.loader.exec_module(module)
-            except Exception as e:
-                logging.error(f"Failed to import module {file}: {e}")
-                continue
-
-            # Find the plugin class
-            for _, cls in inspect.getmembers(module, inspect.isclass):
-                if issubclass(cls, PluginBase) and cls is not PluginBase:
-                    logging.debug(f"Found plugin class: {cls.__name__}")
-                    # Check if the plugin is enabled
-                    env_var_name = f"ENABLE_{cls.__name__.upper()}"
-                    plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"
-                    logging.debug(f"Environment variable {env_var_name} is set to {plugin_enabled}")
-                    if plugin_enabled:
-                        logging.debug(f"Initializing plugin: {cls.__name__}")
-                        # Instantiate the plugin
-                        plugin = cls()
-                        # Initialize the plugin
-                        await plugin.initialize()
-                        logging.debug(f"Plugin {cls.__name__} initialized.")
-                        # Get the tools from the plugin
-                        plugin_available_functions, plugin_tools = plugin.get_tools()
-                        available_functions.update(plugin_available_functions)
-                        logging.debug(f"Plugin {cls.__name__} tools: {plugin_tools}")
-                        tools.extend(plugin_tools)
-                        logging.debug(f"Plugin {cls.__name__} tools added.")
-                    else:
-                        logging.debug(f"Plugin {cls.__name__} is not enabled.")
-                else:
-                    logging.debug(f"Skipping non-PluginBase class: {cls.__name__}")
-
-    logging.info("Finished loading plugins.")
-    return available_functions, tools
-
-# The following line should be part of the code where you want to log the tool metadata
-# logging.debug("Registered tool metadata: %s", func.tool_metadata)
 
 
 def join_messages(memory: list[dict]):
@@ -262,14 +220,13 @@ def display_help(tools):
     """
     console.print("\n[bold]Available Tools:[/bold]\n", style="bold blue")
     for tool in tools:
-        function_info = tool.get("function", {})
-        name = function_info.get("name", "Unnamed")
-        description = function_info.get(
-            "description",
-            "No description available."
-        )
-        console.print(f"[bold]{name}[/bold]: {description}")
-    console.print()
+        if isinstance(tool, dict) and "function" in tool:
+            function_info = tool["function"]
+            name = function_info.get("name", "Unnamed")
+            description = function_info.get("description", "No description available.")
+            console.print(f"[bold]{name}[/bold]: {description}")
+        else:
+            console.print(f"Invalid tool format: {tool}")
 
 
 async def run_conversation(
@@ -337,14 +294,18 @@ async def run_conversation(
             function_to_call = available_functions[function_name]
             function_args = json.loads(tool_call.function.arguments)
 
-            console.print(
-                f"Calling function: {function_name} args: {function_args}",
-                style="yellow",
+            logging.info(
+                "Calling function: %s args: %s",
+                function_name,
+                function_args,
+                extra={"style": "purple"},
             )
             function_response = await function_to_call(**function_args)
-            console.print(
-                f"Function {function_name} returned: {function_response}\n",
-                style="yellow",
+            logging.info(
+                "Function %s returned: %s\n",
+                function_name,
+                function_response,
+                extra={"style": "orange"},
             )
 
             if function_response is None:
@@ -391,8 +352,6 @@ async def main():
     """
     Main function.
     """
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
@@ -462,7 +421,7 @@ async def main():
     ]
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
-    available_functions, tools = await load_plugins_and_get_tools(
+    available_functions, tools = await enable_plugins(
         available_functions,
         tools
     )
@@ -513,7 +472,7 @@ async def main():
                 available_functions=available_functions,
                 original_user_input=user_input,
                 mem_size=10,
-                memory=memory,  # Pass the memory variable correctly
+                memory=memory,  # Pass the memory variable
             )
 
             # Stop the spinner
