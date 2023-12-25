@@ -8,7 +8,7 @@
 This module defines the MyPlugin plugin.
 """
 
-from plugins.template._my_plugin.my_plugin_tools import (
+from plugins.plugin_template._my_plugin_name.my_plugin_tools import (
     my_tool_list,
     available_functions as my_functions
 )
