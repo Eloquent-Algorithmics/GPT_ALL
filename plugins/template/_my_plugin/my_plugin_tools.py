@@ -6,11 +6,9 @@ Tools for interacting with an external API.
 """
 
 import os
+import logging
 from typing import List
 import aiohttp
-from rich.console import Console
-
-console = Console()
 
 # Define the default URL and API key as constants at the top of the file
 TOOL_URL = os.getenv("MY_API_URL", "https://api.example.com/v1")
@@ -34,13 +32,25 @@ async def get_data_from_my_api(url=TOOL_URL, api_key=TOOL_API_KEY, **kwargs) -> 
                 return items
 
         except aiohttp.ServerTimeoutError as server_timeout_error:
-            console.print(f"Server timeout error occurred: {server_timeout_error}")
+            logging.error(
+                "Server timeout error occurred: %s",
+                server_timeout_error
+            )
         except aiohttp.ClientConnectionError as connection_error:
-            console.print(f"Connection error occurred: {connection_error}")
+            logging.error(
+                "Connection error occurred: %s",
+                connection_error
+            )
         except aiohttp.ClientPayloadError as payload_error:
-            console.print(f"Client payload error occurred: {payload_error}")
+            logging.error(
+                "Client payload error occurred: %s",
+                payload_error
+            )
         except aiohttp.ClientResponseError as response_error:
-            console.print(f"Client response error occurred: {response_error}")
+            logging.error(
+                "Client response error occurred: %s",
+                response_error
+            )
         # Return an empty list in case of any exception
         return []
 

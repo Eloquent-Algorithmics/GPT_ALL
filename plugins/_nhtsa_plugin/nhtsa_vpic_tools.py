@@ -1,15 +1,16 @@
 
 # !/usr/bin/env python
 # coding: utf-8
-# Filename: nhtsa_vpic_expert.py
-# Path: plugins/_nhtsa_vpic_expert/nhtsa_vpic_expert.py
+# Filename: nhtsa_vpic_tools.py
+# Path: plugins/_nhtsa_plugin/nhtsa_vpic_tools.py
 
 """
 This module defines the NHTSA vPIC VIN tools.
 """
+
 import requests
 
-# Define the functions outside the class
+
 async def get_vehicle_details(vin):
     """Retrieve vehicle details by VIN."""
     endpoint = f"https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/{vin}?format=json"
@@ -18,7 +19,6 @@ async def get_vehicle_details(vin):
     return data['Results']
 
 
-# Define the tool list outside the class
 nhtsa_vpic_tool_list = [
     {
         "type": "function",
@@ -39,7 +39,7 @@ nhtsa_vpic_tool_list = [
     },
 ]
 
-# Define the available functions outside the class
+
 available_functions = {
     "get_vehicle_details": get_vehicle_details,
 }

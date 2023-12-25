@@ -13,12 +13,17 @@ This module is responsible for handling audio output.
 """
 
 import os
+import logging
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 from typing import Union
 from io import BytesIO
 import pyttsx3
 import pygame
 from config import TTS_ENGINE, TTS_VOICE_ID, TTS_RATE
+
+comtypes_logger = logging.getLogger('comtypes')
+# Set the logging level to WARNING to ignore DEBUG messages
+comtypes_logger.setLevel(logging.WARNING)
 
 
 def initialize_audio():

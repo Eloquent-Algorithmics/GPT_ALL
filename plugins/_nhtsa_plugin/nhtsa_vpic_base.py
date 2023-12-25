@@ -1,21 +1,14 @@
 
 # !/usr/bin/env python
 # coding: utf-8
-# Filename: nhtsa_vic_expert.py
-# Path: plugins\_nhtsa_expert\nhtsa_vic_expert.py
+# Filename: nhtsa_vpic_base.py
+# Path: plugins/_nhtsa_plugin/nhtsa_vic_base.py
 
 """
 This module defines the NHTSA vPic Vehicle Data plugin.
 """
-import os
-import sys
-# Get the directory of the current file
-current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Add the directory to the Python path to ensure imports work
-sys.path.insert(0, current_dir)
-
-from nhtsa_vpic_tools import (
+from plugins._nhtsa_plugin.nhtsa_vpic_tools import (
     nhtsa_vpic_tool_list,
     available_functions as nhtsa_vpic_functions
 )

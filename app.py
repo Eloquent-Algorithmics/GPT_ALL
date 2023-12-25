@@ -58,10 +58,9 @@ openai_defaults = {
     "max_tokens": 1500,
     "frequency_penalty": 0,
     "presence_penalty": 0,
-
 }
 
-# Configure logging based on the settings from config.py
+# Configure logging based on the settings from .env
 if LOGGING_ENABLED:
     # Set the logging level based on the LOGGING_LEVEL string
     level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)

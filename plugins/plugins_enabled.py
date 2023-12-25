@@ -1,10 +1,13 @@
+
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: plugin_enabled.py
 # Path: plugins/plugin_enabled.py
+
 """
 Enable plugins.
 """
+
 import os
 import importlib.util
 import inspect
