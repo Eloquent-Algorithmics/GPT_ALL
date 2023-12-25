@@ -24,15 +24,23 @@ from plugins._gemini_pro_plugin.gemini_pro_tools import (
 
 
 class GeminiProPlugin(PluginBase):
+    """
+    This is the Gemini Pro Expert plugin.
 
+    This plugin is a wrapper around the Gemini Pro API.
+    """
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
         if self.api_key is None:
-            raise ValueError("GEMINI_API_KEY not set in the environment variables.")
+            raise ValueError("GEMINI_API_KEY not set in the .env file")
 
         genai.configure(api_key=self.api_key)
 
-        self.model = genai.GenerativeModel(model_name="gemini-pro", generation_config=self.default_generation_config(), safety_settings=self.default_safety_settings())
+        self.model = genai.GenerativeModel(
+            model_name="gemini-pro",
+            generation_config=self.default_generation_config(),
+            safety_settings=self.default_safety_settings()
+        )
         self.convo = self.model.start_chat(history=[])
 
         # Initialize the tools and available functions dictionaries
@@ -55,6 +63,9 @@ class GeminiProPlugin(PluginBase):
             self.available_functions[func_name] = functools.partial(func, self)
 
     def default_generation_config(self):
+        """
+        Returns the default generation config for the Gemini Pro API.
+        """
         return {
             "temperature": 1,
             "top_p": 1,
@@ -63,6 +74,9 @@ class GeminiProPlugin(PluginBase):
         }
 
     def default_safety_settings(self):
+        """
+        Returns the default safety settings for the Gemini Pro API.
+        """
         return [
             {
                 "category": "HARM_CATEGORY_HARASSMENT",

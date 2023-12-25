@@ -14,7 +14,7 @@ import aiohttp
 TOOL_URL = os.getenv("MY_API_URL", "https://api.example.com/v1")
 TOOL_API_KEY = os.getenv("MY_API_KEY")
 
-
+# Define the function that will be called by the application
 async def get_data_from_my_api(url=TOOL_URL, api_key=TOOL_API_KEY, **kwargs) -> List:
     """
     Fetch data from the external API based on query parameters.

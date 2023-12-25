@@ -28,7 +28,13 @@ async def get_next_calendar_event(calendar_service):
     try:
         events_result = (
             calendar_service.events()
-            .list(calendarId="primary", timeMin=now, maxResults=1, singleEvents=True, orderBy="startTime")
+            .list(
+                calendarId="primary",
+                timeMin=now,
+                maxResults=1,
+                singleEvents=True,
+                orderBy="startTime"
+            )
             .execute()
         )
         events = events_result.get("items", [])

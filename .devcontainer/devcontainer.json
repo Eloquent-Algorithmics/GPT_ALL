@@ -1,13 +1,21 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/miniconda
 {
-    "name": "(eAI_v_0.0.1)",
+    "name": "(ksGPT)",
     "build": {
         "context": "..",
         "dockerfile": "Dockerfile"
     },
+    // Configure tool-specific properties.
     "customizations": {
+        // Configure properties specific to VS Code.
         "vscode": {
+            // Set *default* container specific settings.json values on container create.
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.testing.pytestEnabled": true,
+                "python.testing.unittestEnabled": false
+            },
             "extensions": [
                 "ms-python.python",
                 "ms-python.autopep8",
@@ -17,22 +25,26 @@
                 "ms-python.mypy-type-checker",
                 "ms-python.vscode-pylance",
                 "ms-python.pylint",
-				"ms-python.debugpy",
-				"vscode-icons-team.vscode-icons",
-                "ms-azuretools.vscode-docker",
-				"esbenp.prettier-vscode",
-				"ms-vsliveshare.vsliveshare",
-				"eamodio.gitlens",
-				"GitHub.copilot-chat",
-				"GitHub.copilot",
-				"streetsidesoftware.code-spell-checker",
-				"genieai.chatgpt-vscode",
-				"github.vscode-github-actions",
-				"GitHub.vscode-pull-request-github",
-				"GitHub.remotehub",
-				"GitHub.github-vscode-theme",
-				"ms-vscode.live-server"
-			]
+                "ms-python.debugpy",
+                "vscode-icons-team.vscode-icons",
+                "esbenp.prettier-vscode",
+                "ms-vsliveshare.vsliveshare",
+                "GitHub.copilot",
+                "GitHub.copilot-chat",
+                "GitHub.vscode-pull-request-github",
+                "GitHub.github-vscode-theme",
+                "streetsidesoftware.code-spell-checker",
+                "genieai.chatgpt-vscode",
+                "ms-vscode.live-server",
+                "DavidAnson.vscode-markdownlint",
+                "charliermarsh.ruff",
+                "stylelint.vscode-stylelint"
+            ]
         }
-    }
+    },
+    // Set `remoteUser` to `root` to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "vscode",
+
+    // Add the freshly containerized repo to the list of safe repositories
+    "postCreateCommand": "git config --global --add safe.directory /workspace"
 }

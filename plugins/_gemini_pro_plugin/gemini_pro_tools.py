@@ -9,15 +9,11 @@ This module defines the Gemini Pro Tools.
 """
 
 import google.generativeai as genai
-from vertexai.preview.generative_models import (
-    GenerativeModel,
-    HarmBlockThreshold,
-    HarmCategory,
-    Part,
-)
 
 
-async def ask_gemini_pro(plugin_instance, question, generation_config=None, safety_settings=None):
+async def ask_gemini_pro(
+        plugin_instance, question, generation_config=None, safety_settings=None
+):
     """
     Ask Gemini Pro a question and get a response.
     """
@@ -47,12 +43,15 @@ async def ask_gemini_pro(plugin_instance, question, generation_config=None, safe
             "threshold": "BLOCK_MEDIUM_AND_ABOVE"
         }
     ]
+
     # Create object for the Gemini Pro model
     model = genai.GenerativeModel(model_name="gemini-pro",
                                   generation_config=generation_config,
                                   safety_settings=safety_settings)
+
     # Create a conversation object
     convo = model.start_chat(history=[])
+
     # Ask the question and get the response
     convo.send_message(question)
 

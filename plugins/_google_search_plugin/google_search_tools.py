@@ -31,13 +31,19 @@ async def search_google(query: str) -> List:
     }
 
     # Debug print
-    logging.info(f"Making request to Google CSE API with params: {params}")
+    logging.info(
+        "Making request to Google CSE API with params: %s",
+        params
+    )
 
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, params=params, timeout=5) as res:
                 data = await res.json()
-                logging.info(f"Received response from Google CSE API: {data}")
+                logging.info(
+                    "Received response from Google CSE API: %s",
+                    data
+                )
                 results = []
                 if data.get("items"):
                     for item in data["items"]:
@@ -49,17 +55,28 @@ async def search_google(query: str) -> List:
                             }
                         )
                 # Log the results before returning
-                logging.info(f"Search results: {results}")
+                logging.info("Search results: %s", results)
                 return results
 
         except (KeyError, TypeError) as error:
-            logging.error(f"An error occurred: {error}")
+            logging.error(
+                "An error occurred: %s",
+                error
+            )
             return []
+
         except asyncio.TimeoutError as error:
-            logging.error(f"Timeout error occurred: {error}")
+            logging.error(
+                "Timeout error occurred: %s",
+                error
+            )
             return []
+
         except aiohttp.ClientError as error:
-            logging.error(f"Client error occurred: {error}")
+            logging.error(
+                "Client error occurred: %s",
+                error
+            )
             return []
 
 

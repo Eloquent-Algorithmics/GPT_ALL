@@ -359,7 +359,7 @@ async def main():
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
-        description="KitchenSinkGPT - A GPT-4-turbo based Mixture of Experts Assistant"
+        description="KitchenSinkGPT - A GPT-4-turbo based Mixture of Expert tools."
     )
     parser.add_argument(
         "--talk", action="store_true", help="Use TTS for the final response"

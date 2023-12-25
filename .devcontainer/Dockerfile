@@ -1,34 +1,35 @@
+# Use the official Python image
+FROM python:3.12
 
-# Use the official Miniconda image as a parent image
-FROM mcr.microsoft.com/devcontainers/miniconda:0-3
+# Create a non-root user 'vscode' and give them sudo access
+RUN apt-get update && apt-get install -y sudo && \
+    useradd -m vscode -s /bin/bash && \
+    echo "vscode ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vscode && \
+    chmod 0440 /etc/sudoers.d/vscode
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /workspace
 
-# Initialize conda for shell interaction
-RUN conda init
-
-# Create a new Conda environment named ksGPT with Python 3.12
-RUN conda create -n ksGPT -c conda-forge python=3.12 -y
-
-# Initialize conda for shell interaction and set conda to automatically activate the base environment
-RUN conda init bash \
-    && echo "conda activate ksGPT" >> ~/.bashrc
+# Install utilities and upgrade pip
+RUN apt-get install -y \
+    curl \
+    wget \
+    git \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --upgrade pip
 
 # Copy the requirements.txt file into the container at /workspace
 COPY requirements.txt /workspace/
 
-# Install the Python requirements in the ksGPT environment
-RUN conda run -n ksGPT pip install --no-cache-dir -r requirements.txt
+# Install the Python requirements
+RUN pip install --no-cache-dir -r /workspace/requirements.txt
 
-# Download the SpaCy NLP model in the eAI environment
-RUN conda run -n ksGPT python -m spacy download en_core_web_sm
+RUN pip install mypy
 
-# Set the default environment to eAI when starting the container
-# This will activate the eAI environment for any interactive or non-interactive shell
-ENV CONDA_DEFAULT_ENV=ksGPT
-ENV CONDA_PREFIX=/opt/conda/envs/ksGPT
-ENV PATH=$CONDA_PREFIX/bin:$PATH
+RUN mypy --install-types --non-interactive
 
-# Ensure that the conda environment is activated on startup
-ENTRYPOINT ["conda", "run", "-n", "ksGPT", "/bin/bash"]
+# Download the SpaCy NLP model
+RUN python -m spacy download en_core_web_sm
+
+# Switch to the 'vscode' user
+USER vscode
