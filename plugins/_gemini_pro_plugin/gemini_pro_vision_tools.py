@@ -115,12 +115,29 @@ async def ask_gemini_pro_vision(self, question, specific_file_name) -> Image:
                 [image_bytes, question],
                 stream=False,
             )
-        except Exception as e:
+        except FileNotFoundError as e:
             logging.error(
-                "An unexpected error occurred during the request: %s",
-                e
+                "File not found: %s", e,
             )
-            return "Error during the request."
+            return "File not found."
+
+        except PermissionError as e:
+            logging.error(
+                "Permission denied when accessing the file: %s", e,
+            )
+            return "Permission denied."
+
+        except TypeError as e:
+            logging.error(
+                "An unexpected error occurred while reading the file: %s", e,
+            )
+            return "Error reading the file."
+
+        except ValueError as e:
+            logging.error(
+                "Error creating the GenerativeModel object: %s", e
+            )
+            return "Error creating the model."
 
         # Process the response
         try:
@@ -129,13 +146,36 @@ async def ask_gemini_pro_vision(self, question, specific_file_name) -> Image:
                     return response.candidates[0].content.parts[0].text
                 else:
                     return "No response candidates found."
-        except Exception as e:
-            logging.error("Error processing the response: %s", e)
-            return "Error processing the response."
 
-    except Exception as e:
-        logging.error("An unexpected error occurred: %s", e)
-        return "An unexpected error occurred."
+        except FileNotFoundError as e:
+            logging.error("File not found: %s", e)
+            return "File not found."
+        except PermissionError as e:
+            logging.error("Permission denied when accessing the file: %s", e)
+            return "Permission denied."
+        except TypeError as e:
+            logging.error(
+                "An unexpected error occurred while reading the file: %s", e
+            )
+            return "Error reading the file."
+        except ValueError as e:
+            logging.error("Error creating the GenerativeModel object: %s", e)
+            return "Error creating the model."
+
+    except FileNotFoundError as e:
+        logging.error("File not found: %s", e)
+        return "File not found."
+    except PermissionError as e:
+        logging.error("Permission denied when accessing the file: %s", e)
+        return "Permission denied."
+    except TypeError as e:
+        logging.error(
+            "An unexpected error occurred while reading the file: %s", e
+        )
+        return "Error reading the file."
+    except ValueError as e:
+        logging.error("Error creating the GenerativeModel object: %s", e)
+        return "Error creating the model."
 
 
 gemini_pro_vision_tools = [
@@ -149,7 +189,7 @@ gemini_pro_vision_tools = [
                 "properties": {
                     "question": {
                         "type": "string",
-                        "description": "The question to ask Gemini Pro Vision model.",
+                        "description": "The question to ask Gemini Pro Vision",
                     },
                     "specific_file_name": {
                         "type": "string",
