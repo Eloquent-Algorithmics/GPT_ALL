@@ -1,8 +1,8 @@
-<p align="center">
-  <img src="ksGPT.png" alt="hero_image">
-</p>
 
 # KitchenSinkGPT
+
+![Demo GIF](assets/demo.gif)
+
 <p align="center">
 Welcome to KitchenSinkGPT: a cutting-edge AI assistant empowered by the capabilities of large language models (LLMs). This versatile assistant is adept at harvesting and interpreting real-time data from a plethora of sources, all while seamlessly meshing with the extensive functionalities of Python 3.12. At its heart lies OpenAI's GPT-4-1106 model, skillfully selecting functions and tools from a suite of specialized "experts" to optimize token efficiency. KitchenSinkGPT boasts a dynamic command-line interface, embodying both power and flexibility. Engineered to harness the most recent advancements, tools, and expanded context windows available in the latest OpenAI API updates. The goal is clear and ambitious: to integrate chat GPT with an array of applications and devices, extending even to the kitchen sink (when Bluetooth-equipped), unlocking unprecedented possibilities. KitchenSinkGPT's capabilities are further amplified by a range of built-in plugins, and you're encouraged to craft your own to broaden its diverse array of functionalities.
 </p>
