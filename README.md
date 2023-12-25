@@ -7,50 +7,6 @@
 Welcome to KitchenSinkGPT: a cutting-edge AI assistant empowered by the capabilities of large language models (LLMs). This versatile assistant is adept at harvesting and interpreting real-time data from a plethora of sources, all while seamlessly meshing with the extensive functionalities of Python 3.12. At its heart lies OpenAI's GPT-4-1106 model, skillfully selecting functions and tools from a suite of specialized "experts" to optimize token efficiency. KitchenSinkGPT boasts a dynamic command-line interface, embodying both power and flexibility. Engineered to harness the most recent advancements, tools, and expanded context windows available in the latest OpenAI API updates. The goal is clear and ambitious: to integrate chat GPT with an array of applications and devices, extending even to the kitchen sink (when Bluetooth-equipped), unlocking unprecedented possibilities. KitchenSinkGPT's capabilities are further amplified by a range of built-in plugins, and you're encouraged to craft your own to broaden its diverse array of functionalities.
 </p>
 
-<details>
-<summary>Currently Included Tools</summary>
-
-- **get_current_date_time**:
-    - Get the current date and time.
-- **get_system_information**:
-    - Get information about the local machine.
-- **run_system_command**:
-    - Run a system command.
-- **read_python_script**:
-    - Read a Python script.
-- **write_python_script**:
-    - Write a Python script.
-- **amend_python_script**:
-    - Amend a Python script.
-- **execute_python_script**:
-    - Execute a Python script.
-- **ask_chat_gpt_4_0314**:
-    - Send a request the 0314 (or any) model with a custom system prompt and tool set.
-- **ask_gemini_pro**:
-    - Send a request to Gemini Pro.
-- **send_email**:
-    - Send an email message using Gmail.
-- **delete_email**:
-    - Delete an email message by ID from Gmail.
-- **get_emails_google**:
-    - Retrieve a list of emails from Gmail.
-- **get_next_google_calendar_event**:
-    - Get the next event from a Google Calendar.
-- **search_google**:
-    - Search Google and return results.
-- **get_all_news**:
-    - Aggregate news articles from NewsAPI.org and The New York Times based on a query.
-- **get_news_from_newsapi**:
-    - Fetch news articles from the NewsAPI.org API based on a query.
-- **get_news_from_nyt**:
-    - Fetch news articles from The New York Times API based on a query.
-- **get_current_weather**:
-    - Get the current weather in a location.
-- **get_vehicle_details**:
-    - Retrieve details of a vehicle by VIN from the NHTSA vPic API.
-
-</details>
-
 ## Features
 <details>
   <summary>Latest Features:</summary>
