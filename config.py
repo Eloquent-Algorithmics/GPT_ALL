@@ -18,7 +18,9 @@ live_spinner = Live(Spinner("aesthetic", " "), auto_refresh=True)
 LOGGING_ENABLED = os.getenv('LOGGING_ENABLED', 'false').lower() == 'true'
 LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'WARNING')
 LOGGING_FILE = os.getenv('LOGGING_FILE', None)
-LOGGING_FORMAT = os.getenv('LOGGING_FORMAT', '%(name)s - %(levelname)s - %(message)s')
+LOGGING_FORMAT = os.getenv(
+    'LOGGING_FORMAT', '%(name)s - %(levelname)s - %(message)s'
+)
 
 # Add your API keys and variables here
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -44,4 +46,4 @@ TTS_VOICE_ID = os.getenv("TTS_VOICE_ID")
 if TTS_VOICE_ID is None:
     raise ValueError("TTS_VOICE_ID not set")
 
-TTS_RATE = int(os.getenv("TTS_RATE", str(175)))
+TTS_RATE = int(os.getenv("TTS_RATE", str(150)))
