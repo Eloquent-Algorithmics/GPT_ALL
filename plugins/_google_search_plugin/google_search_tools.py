@@ -7,6 +7,7 @@
 """
 Tools for interacting with Google Search API.
 """
+
 import os
 import logging
 import asyncio

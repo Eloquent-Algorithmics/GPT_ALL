@@ -2,10 +2,7 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: audio_pyttsx3.py
-# File Path: output\audio_pyttsx3.py
-# Last modified by: ExplorerGT92
-# Last modified on: 2023/12/17
-# branch: voice_rec_and_tts
+# File Path: output/audio_pyttsx3.py
 
 """
 This module is responsible for handling audio output.
@@ -14,10 +11,10 @@ This module is responsible for handling audio output.
 
 import os
 import logging
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 from typing import Union
 from io import BytesIO
 import pyttsx3
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 import pygame
 from config import TTS_ENGINE, TTS_VOICE_ID, TTS_RATE
 

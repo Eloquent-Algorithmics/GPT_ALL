@@ -2,7 +2,7 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: system_commands_base.py
-# Path: plugins\system_commands_base.py
+# Path: plugins/_system_commands/system_commands_base.py
 
 """
 This file contains the System Commands plugin class.

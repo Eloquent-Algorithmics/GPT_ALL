@@ -2,11 +2,13 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: newsapi_tools.py
-# Path: plugins/_news_expert/newsapi_tools.py
+# Path: plugins/_news_plugin/newsapi_tools.py
+
 """
 Tools for interacting with NewsAPI.org API.
 register for an API key @ https://newsapi.org/
 """
+
 import os
 import logging
 from typing import List

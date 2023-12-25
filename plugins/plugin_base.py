@@ -1,7 +1,8 @@
+
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: plugin_base.py
-# Path: plugins/plugin_base.py
+# Path: plugins/_plugin_name/plugin_name_base.py
 
 """
 Base class for the plugins.
