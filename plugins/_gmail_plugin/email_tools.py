@@ -3,9 +3,11 @@
 # coding: utf-8
 # Filename: email_tools.py
 # Path: plugins/_gmail_plugin/email_tools.py
+
 """
 This module contains the Gmail Email functions and tools.
 """
+
 import os
 import base64
 import binascii

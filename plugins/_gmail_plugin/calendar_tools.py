@@ -3,9 +3,11 @@
 # coding: utf-8
 # Filename: calendar_tools.py
 # Path: plugins/_gmail_plugin/calendar_tools.py
+
 """
 This module contains the Gmail Calendar functions and tools.
 """
+
 import datetime
 import logging
 from googleapiclient.errors import HttpError

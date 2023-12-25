@@ -1,4 +1,3 @@
-
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: app.py
@@ -66,7 +65,11 @@ if LOGGING_ENABLED:
     level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
     # Configure logging with or without a log file
     if LOGGING_FILE:
-        logging.basicConfig(level=level, format=LOGGING_FORMAT, filename=LOGGING_FILE)
+        logging.basicConfig(
+            level=level,
+            format=LOGGING_FORMAT,
+            filename=LOGGING_FILE
+        )
     else:
         logging.basicConfig(level=level, format=LOGGING_FORMAT)
 else:
@@ -80,6 +83,7 @@ def play_video(video_path):
     Args:
         video_path (str): The path to the video file.
     """
+
     def video_player(path):
         clip = VideoFileClip(path)
         clip.preview()
@@ -119,7 +123,10 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
     text = kwargs.get("text", "")
 
     messages = [
-        {"role": "system", "content": "You are an AI Assistant...", },
+        {
+            "role": "system",
+            "content": "You are an AI Assistant...",
+        },
         {"role": "user", "content": question},
         {"role": "assistant", "content": text},
     ]
@@ -136,9 +143,11 @@ async def ask_chat_gpt_4_0314(**kwargs) -> str:
         )
 
     # Check if the response has the expected structure and content
-    if (response.choices and
-            response.choices[0].message and
-            response.choices[0].message.content):
+    if (
+        response.choices
+        and response.choices[0].message
+        and response.choices[0].message.content
+    ):
         return response.choices[0].message.content
     else:
         # Handle the case where the expected content is not available
@@ -167,10 +176,7 @@ def check_under_context_limit(text: str, limit: int, model: str):
 
 
 async def follow_conversation(
-        user_text: str,
-        memory: list[dict],
-        mem_size: int,
-        model: str
+    user_text: str, memory: list[dict], mem_size: int, model: str
 ):
     """
     This function follows the conversation.
@@ -179,28 +185,26 @@ async def follow_conversation(
     if ind == 0:
         memory = [{"role": "system", "content": MAIN_SYSTEM_PROMPT}]
     memory.append({"role": "user", "content": user_text})
-    while not check_under_context_limit(
-        join_messages(memory),
-        128000,
-        model
-    ) and ind > 1:
+    while (
+        not check_under_context_limit(
+            join_messages(memory),
+            128000,
+            model
+        ) and ind > 1
+    ):
         ind -= 1
         memory.pop(0)  # Remove the oldest messages if the limit is exceeded
     response = await base_client.chat.completions.create(
-        model=model,
-        messages=memory[-ind:]
+        model=model, messages=memory[-ind:]
     )
     # Check if the response has the expected structure and content
-    if (response.choices and
-            response.choices[0].message and
-            response.choices[0].message.content is not None):
+    if (
+        response.choices
+        and response.choices[0].message
+        and response.choices[0].message.content is not None
+    ):
         tr = response.choices[0].message.content
-        memory.append(
-            {
-                "role": "assistant",
-                "content": tr
-            }
-        )
+        memory.append({"role": "assistant", "content": tr})
     else:
         # Handle the case where the expected content is not available
         memory.append(
@@ -222,7 +226,9 @@ def display_help(tools):
         if isinstance(tool, dict) and "function" in tool:
             function_info = tool["function"]
             name = function_info.get("name", "Unnamed")
-            description = function_info.get("description", "No description available.")
+            description = function_info.get(
+                "description", "No description available."
+            )
             console.print(f"[bold]{name}[/bold]: {description}")
         else:
             console.print(f"Invalid tool format: {tool}")
@@ -235,7 +241,7 @@ async def run_conversation(
     original_user_input,
     memory,
     mem_size,
-    **kwargs
+    **kwargs,
 ):
     """
     Run the conversation.
@@ -244,7 +250,7 @@ async def run_conversation(
         user_text=original_user_input,
         memory=memory,
         mem_size=mem_size,
-        model=openai_defaults["model"]
+        model=openai_defaults["model"],
     )
     memory.append({"role": "user", "content": original_user_input})
 
@@ -263,16 +269,16 @@ async def run_conversation(
         presence_penalty=openai_defaults["presence_penalty"],
     )
     response_message = response.choices[0].message
-    tool_calls = response_message.tool_calls if hasattr(
-        response_message,
-        'tool_calls'
-    ) else []
+    tool_calls = (
+        response_message.tool_calls if hasattr(
+            response_message, "tool_calls"
+        ) else []
+    )
 
     if response_message.content is not None:
         memory.append(
             {
-                "role": "assistant",
-                "content": response_message.content
+                "role": "assistant", "content": response_message.content
             }
         )
 
@@ -285,8 +291,7 @@ async def run_conversation(
 
             if function_name not in available_functions:
                 console.print(
-                    f"Function {function_name} is not available.",
-                    style="red"
+                    f"Function {function_name} is not available.", style="red"
                 )
                 continue
 
@@ -326,7 +331,7 @@ async def run_conversation(
         messages.append(
             {
                 "role": "user",
-                "content": f"With the data returned from the tool calls, generate the second response to the original request that was: {original_user_input}, that makes use of the tool responses.",
+                "content": f"With the data returned from the tool calls, generate any subsequently required requests and tool calls to process and understand the responses from the tool calls until you have verified you have the correct response to answer the original users request that was: {original_user_input}. And then follow up with any additional requests or tool calls to complete task required to fulfill the original request.",
             }
         )
 
@@ -354,27 +359,22 @@ async def main():
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
-        description='KitchenSinkGPT - A GPT-4-turbo based Mixture of Experts AI Assistant'
+        description="KitchenSinkGPT - A GPT-4-turbo based Mixture of Experts Assistant"
     )
     parser.add_argument(
-        '--talk', action='store_true', help='Use TTS for the final response'
+        "--talk", action="store_true", help="Use TTS for the final response"
     )
     parser.add_argument(
-        '--intro', action='store_true', help='Play an intro video at startup'
+        "--intro", action="store_true", help="Play an intro video at startup"
     )
     args = parser.parse_args()
 
     use_tts = args.talk
 
     if args.intro:
-        play_video('intro_video.mp4')
+        play_video("intro_video.mp4")
 
-    console.print(
-        Markdown(
-            "# 👋  KitchenSinkGPT 👋"
-        ),
-        style="bold blue"
-    )
+    console.print(Markdown("# 👋  KitchenSinkGPT 👋"), style="bold blue")
 
     # Initialize available base functions and tools
     available_functions = {
@@ -396,7 +396,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314",
-                "description": "Ask a smarter AI LLM that is able to understand more complex concepts and perform complex tasks.",
+                "description": "Ask an older AI LLM that is able to understand more complex concepts and perform complex tasks.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -420,17 +420,13 @@ async def main():
     ]
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
-    available_functions, tools = await enable_plugins(
-        available_functions,
-        tools
-    )
+    available_functions, tools = await enable_plugins(available_functions, tools)
 
     # Initialize the conversation memory
     memory = []
 
     # Main Loop
     while True:
-
         # Ask the user for input
         user_input = Prompt.ask(
             "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]exit or quit[/bold yellow])",
@@ -452,15 +448,11 @@ async def main():
                 "role": "system",
                 "content": MAIN_SYSTEM_PROMPT,
             },
-            {
-                "role": "user",
-                "content": f"{user_input}"
-            },
+            {"role": "user", "content": f"{user_input}"},
         ]
 
         # Start the spinner
         with live_spinner:
-
             # Start the spinner
             live_spinner.start()
 
@@ -489,20 +481,16 @@ async def main():
                 console.print("\n" + final_text, style="green")
         else:
             # Print an error message if the model did not return a response
-            console.print(
-                "\nI'm not sure how to help with that.",
-                style="red"
-            )
+            console.print("\nI'm not sure how to help with that.", style="red")
 
         # Remove tools from the tools list after processing
         tools[:] = [
-            tool for tool in tools
-            if not tool.get("function", {}).get("name", "").lower()
-            in user_input.lower()
+            tool
+            for tool in tools
+            if tool.get("function", {}).get("name", "").lower()
+            not in user_input.lower()
         ]
 
 
 if __name__ == "__main__":
-    asyncio.run(
-        main()
-    )
+    asyncio.run(main())

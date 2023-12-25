@@ -2,12 +2,13 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: nytimes_tools.py
-# Path: plugins/_news_expert/nytimes_tools.py
+# Path: plugins/_news_plugin/nytimes_tools.py
 
 """
 This script contains the functions, tools, and available tools lists
 to fetch articles from New York Times.
 """
+
 import os
 import logging
 from typing import List

@@ -2,7 +2,7 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: system_commands_tools.py
-# Path: plugins\system_commands_tools.py
+# Path: plugins/_system_commands/system_commands_tools.py
 
 """
 This file contains the System Commands function definitions and tools.
