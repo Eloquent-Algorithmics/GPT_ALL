@@ -1,41 +1,19 @@
+<p align="center">
+  <img src="ksGPT.png" alt="hero_image">
+</p>
+
 # KitchenSinkGPT
+<p align="center">
+Welcome to KitchenSinkGPT: a cutting-edge AI assistant empowered by the capabilities of large language models (LLMs). This versatile assistant is adept at harvesting and interpreting real-time data from a plethora of sources, all while seamlessly meshing with the extensive functionalities of Python 3.12. At its heart lies OpenAI's GPT-4-1106 model, skillfully selecting functions and tools from a suite of specialized "experts" to optimize token efficiency. KitchenSinkGPT boasts a dynamic command-line interface, embodying both power and flexibility. Engineered to harness the most recent advancements, tools, and expanded context windows available in the latest OpenAI API updates. The goal is clear and ambitious: to integrate chat GPT with an array of applications and devices, extending even to the kitchen sink (when Bluetooth-equipped), unlocking unprecedented possibilities. KitchenSinkGPT's capabilities are further amplified by a range of built-in plugins, and you're encouraged to craft your own to broaden its diverse array of functionalities.
+</p>
 
-Welcome to KitchenSinkGPT, an AI-powered assistant designed to help you navigate complex tasks with ease. Built with Python and integrated with OpenAI's GPT-4 model, KitchenSinkGPT offers a rich command-line experience that's both powerful and user-friendly. Designed to utilize new features and functions available with the release of OpenAI API v1 and the 1106 models. The idea is simple, create a way to connect chat gpt to everything, even the kitchen sink (if it has bluetooth) ... and see what we can get it to do. Extend KitchenSinkGPT's capabilities by enabling various plugins or easily build new ones.
-
-## Features
-
-- **AsyncOpenAI Integration**: 
-    - Asynchronous parallel function calling to allow the assistant to complete multiple tool calls in a single request.
-    - Leverage the power of GPT-4 for complex inquiries using tools and tool calls.
-
-## Available Tools
+<details>
+<summary>Currently Included Tools</summary>
 
 - **get_current_date_time**:
     - Get the current date and time.
-- **ask_chat_gpt_4_0314**:
-    - Ask a smarter AI language model that is able to understand more complex concepts and perform complex tasks.
-- **send_email**:
-    - Send an email message.
-- **delete_email**:
-    - Delete an email message by ID.
-- **get_emails_google**:
-    - Retrieve a list of emails from Gmail.
-- **get_next_google_calendar_event**:
-    - Get the next event from the Google Calendar.
-- **search_google**:
-    - Search Google and return results.
-- **ask_gemini_pro**:
-    - Ask Gemini Pro a question and print the response.
-- **get_all_news**:
-    - Aggregate news articles from NewsAPI.org and The New York Times.
-- **get_news_from_newsapi**:
-    - Fetch news articles from the NewsAPI.org API.
-- **get_news_from_nyt**:
-    - Fetch news from The New York Times API.
-- **get_vehicle_details**:
-    - Retrieve details of a vehicle by VIN.
 - **get_system_information**:
-    - Get information about the local system.
+    - Get information about the local machine.
 - **run_system_command**:
     - Run a system command.
 - **read_python_script**:
@@ -46,46 +24,76 @@ Welcome to KitchenSinkGPT, an AI-powered assistant designed to help you navigate
     - Amend a Python script.
 - **execute_python_script**:
     - Execute a Python script.
+- **ask_chat_gpt_4_0314**:
+    - Send a request the 0314 (or any) model with a custom system prompt and tool set.
+- **ask_gemini_pro**:
+    - Send a request to Gemini Pro.
+- **send_email**:
+    - Send an email message using Gmail.
+- **delete_email**:
+    - Delete an email message by ID from Gmail.
+- **get_emails_google**:
+    - Retrieve a list of emails from Gmail.
+- **get_next_google_calendar_event**:
+    - Get the next event from a Google Calendar.
+- **search_google**:
+    - Search Google and return results.
+- **get_all_news**:
+    - Aggregate news articles from NewsAPI.org and The New York Times based on a query.
+- **get_news_from_newsapi**:
+    - Fetch news articles from the NewsAPI.org API based on a query.
+- **get_news_from_nyt**:
+    - Fetch news articles from The New York Times API based on a query.
 - **get_current_weather**:
     - Get the current weather in a location.
+- **get_vehicle_details**:
+    - Retrieve details of a vehicle by VIN from the NHTSA vPic API.
 
-- **Plugin System**:
-    - easily install new functions/tools to extend the APIs' abilities.
-    - Plugins load dynamically if they are enabled via the .env
+</details>
 
-- **Conversation Memory Management**: 
-    - **** >>> NEEDS WORK <<<< ****
+## Features
+<details>
+  <summary>Latest Features:</summary>
+  
+  - **AsyncOpenAI Integration**: 
+      - Asynchronous parallel function calling to allow the assistant to complete multiple tool calls in a single request.
+      - Leverage the power of GPT-4 for complex inquiries using tools and tool calls.
+  
+  - **Conversation Memory Management**:
+      - Can remember and reference previous inputs and responses in the same session only.
+  
+  - **Conversation Flow**:
+      - Managed flow of conversation by appending user input to memory and ensuring responses are within context limits.
+  
+  - **Dynamic Function Invocation Based on Tool Responses**:
+      - Handles dynamic invocation of functions based on tool call responses.
+      - Manages conversation state by appending messages from tool calls.
+      - Generates follow-up responses considering tool call results.
+  
+  - **Environment Cleanup**:
+      - Cleans up tools list after processing each request to help manage token usage.
+  
+  - **Modular Plugin System**:
+      - easily install new functions/tools to extend KitchenSinkGPTs' abilities.
+      - Plugins load dynamically if enabled via the .env
 
-- **Conversation Flow**:
-    - Managed flow of conversation by appending user input to memory and ensuring responses are within context limits.
+</details>
+<br>
 
-- **Dynamic Function Invocation Based on Tool Responses**:
-    - Handles dynamic invocation of functions based on tool call responses.
-    - Manages conversation state by appending messages from tool calls.
-    - Generates follow-up responses considering tool call results.
-
-- **Environment Cleanup**:
-    - Cleans up tools list after processing each request.
-
-# ⚠️ Disclamer ⚠️
-    - **Please note** some materials may not provide ***the best possible or the most optimal*** recommendations, solutions or source codes. Try to be open minded and take everything as a `step` in the `learning process`. If you encounter something to improve in the materials, **please** write your suggestions to the respected authors.
-
-    - **This version of KitchenSinkGPT is totally experimental, USE IT AT YOUR OWN RISK. Even if a lot of tests have been performed on this version some things can be buggy or some lack of functionality.**
-    
-    - This version can be driven by the community. If you want to help us improve this version don't hesitate to send a git hub issue or PR.
-
-## Getting Started
+# Getting Started
 
 ### Prerequisites
 
-- Ensure you have conda installed on your system. VScode Dev Container extension and Docker recommended for safety.
+- Ensure you have conda installed on your system.
+
+- VScode Dev Container extension and Docker <br>is recommended for safety with system commands enabled.
 
 ### Installation
 
 Clone this repository to your local machine using:
 
 ```bash
-git clone https://github.com/ExplorerGT92/KitchenSinkGPT.git
+git clone https://github.com/Eloquent-Algorithmics/KitchenSinkGPT.git
 ```
 
 Navigate into the project directory:
@@ -102,6 +110,8 @@ cd KitchenSinkGPT
 
 To enable specific plugins or features, modify the `.env` file in your project directory according to your needs.
 
+**OpenAI API key is required** all others optional.
+
 
 ### Usage
 
@@ -115,13 +125,19 @@ python -m app
 
 or
 
-python -m app --talk  # Use --talk to use TTS.
+python -m app --talk  # To use TTS.
 
 or
 
-python -m app --intro  # Use --intro to play an intro video at startup.
+python -m app --intro  # Use to play video at launch.
 ```
 
+# ⚠️ Disclamer ⚠️
+**Please note** some materials may not provide ***the best possible or the most optimal*** recommendations, solutions or source codes. Try to be open minded and take everything as a `step` in the `learning process`. If you encounter something to improve in the materials, **please** write your suggestions to the respected authors.
+
+**This version of KitchenSinkGPT is totally experimental, USE IT AT YOUR OWN RISK. Even if a lot of tests have been performed on this version some things can be buggy or some lack of functionality.**
+
+This version can be driven by the community. If you want to help improve this version don't hesitate to submit a github issue or PR.
 
 ## Contributing
 
