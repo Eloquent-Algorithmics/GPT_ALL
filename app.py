@@ -359,7 +359,7 @@ async def main():
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
-        description="KitchenSinkGPT - A GPT-4-turbo based Mixture of Expert tools."
+        description="GPT_ALL - A GPT-4-turbo based Mixture of Expert tools."
     )
     parser.add_argument(
         "--talk", action="store_true", help="Use TTS for the final response"
@@ -374,7 +374,7 @@ async def main():
     if args.intro:
         play_video("intro_video.mp4")
 
-    console.print(Markdown("# 👋  KitchenSinkGPT 👋"), style="bold blue")
+    console.print(Markdown("# 👋  GPT_ALL 👋"), style="bold blue")
 
     # Initialize available base functions and tools
     available_functions = {
