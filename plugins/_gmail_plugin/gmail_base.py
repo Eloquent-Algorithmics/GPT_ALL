@@ -27,6 +27,10 @@ from plugins._gmail_plugin.drive_tools import (
     drive_tools_list,
     available_functions as drive_functions
 )
+from plugins._gmail_plugin.sheets_tools import (
+    sheets_tools_list,
+    available_functions as sheets_functions
+)
 from plugins.plugin_base import PluginBase
 
 
@@ -47,6 +51,7 @@ class GmailPlugin(PluginBase):
         self.gmail_service = build("gmail", "v1", credentials=self.creds)
         self.calendar_service = build("calendar", "v3", credentials=self.creds)
         self.drive_service = build("drive", "v3", credentials=self.creds)
+        self.sheets_service = build("sheets", "v4", credentials=self.creds)
 
         super().__init__()
 
@@ -83,6 +88,15 @@ class GmailPlugin(PluginBase):
             self.available_functions[func_name] = functools.partial(
                 func,
                 self.drive_service
+            )
+
+        # Load tools and functions from sheets_tools.py
+        self.tools.extend(sheets_tools_list)
+        for func_name, func in sheets_functions.items():
+            # Pass the drive_service to the drive functions
+            self.available_functions[func_name] = functools.partial(
+                func,
+                self.sheets_service
             )
 
     def _load_credentials(self):
