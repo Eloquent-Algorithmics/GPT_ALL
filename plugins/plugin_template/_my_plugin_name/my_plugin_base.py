@@ -1,11 +1,11 @@
 
 # !/usr/bin/env python
 # coding: utf-8
-# Filename: my_plugin.py
+# Filename: my_plugin_base.py
 # Path: plugins/template/_my_plugin/my_plugin.py
 
 """
-This module defines the MyPlugin plugin.
+This script defines any shared aspects of this tool class.
 """
 
 from plugins.plugin_template._my_plugin_name.my_plugin_tools import (
