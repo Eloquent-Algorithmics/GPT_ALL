@@ -38,7 +38,10 @@
                 "ms-vscode.live-server",
                 "DavidAnson.vscode-markdownlint",
                 "charliermarsh.ruff",
-                "stylelint.vscode-stylelint"
+                "stylelint.vscode-stylelint",
+                "VisualStudioExptTeam.vscodeintellicode",
+                "VisualStudioExptTeam.intellicode-api-usage-examples",
+                "VisualStudioExptTeam.vscodeintellicode-completions"
             ]
         }
     },
