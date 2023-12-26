@@ -15,7 +15,6 @@ import spacy
 from googleapiclient.discovery import build
 from googleapiclient.http import (
     MediaIoBaseUpload,
-    MediaIoBaseDownload
 )
 
 # Load the spaCy model
@@ -65,7 +64,7 @@ def extract_file_id(text):
     """
     Extract a file ID-like pattern from user input using regular expressions.
     """
-    # This is a simple regex pattern that you might need to adjust according to your actual file ID format
+    # This is a simple regex pattern
     pattern = r'([a-zA-Z0-9-_]{25,})'
     matches = re.findall(pattern, text)
     return matches
@@ -77,11 +76,13 @@ def extract_local_paths(text):
     """
     # Assuming local paths may be mentioned as entities of type 'ORG' or 'FAC'
     doc = nlp(text)
-    local_paths = [ent.text for ent in doc.ents if ent.label_ in ("ORG", "FAC")]
+    local_paths = [
+        ent.text for ent in doc.ents if ent.label_ in ("ORG", "FAC")
+    ]
 
     # Alternatively, use regex to match a pattern for file paths
-    # pattern = r'([a-zA-Z]:\\(?:[^\\\/:*?"<>|\r\n]+\\)*[^\\\/:*?"<>|\r\n]*)'
-    # local_paths.extend(re.findall(pattern, text))
+    pattern = r'([a-zA-Z]:\\(?:[^\\\/:*?"<>|\r\n]+\\)*[^\\\/:*?"<>|\r\n]*)'
+    local_paths.extend(re.findall(pattern, text))
 
     return local_paths
 
@@ -153,16 +154,16 @@ async def download_file(drive_service, user_input, local_path):
             if folders:
                 folder_id = folders[0].get('id')
 
-        # Search for the file by name (and within the folder if folder ID is available)
+        # Search for the file by name
         file_query = f"name = '{file_name}'"
         if folder_id:
             file_query += f" and '{folder_id}' in parents"
         logging.info("Downloaded file '%s' with ID: %s", file_name, file_id)
         return f"Downloaded file '{file_name}' to {local_path}"
 
-    except Exception as e:
+    except IOError as e:
         logging.error(
-            f"An error occurred: {e}", exc_info=True
+            "An error occurred: %s", e, exc_info=True
         )
         return f"An error occurred while downloading the file: {e}"
 
