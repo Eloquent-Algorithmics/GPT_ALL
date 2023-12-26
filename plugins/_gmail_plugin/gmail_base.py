@@ -42,7 +42,9 @@ class GmailPlugin(PluginBase):
     SCOPES = [
         "https://mail.google.com/",
         "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/drive"
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/documents",
     ]
 
     def __init__(self):
@@ -52,6 +54,7 @@ class GmailPlugin(PluginBase):
         self.calendar_service = build("calendar", "v3", credentials=self.creds)
         self.drive_service = build("drive", "v3", credentials=self.creds)
         self.sheets_service = build("sheets", "v4", credentials=self.creds)
+        self.documents_service = build("docs", "v1", credentials=self.creds)
 
         super().__init__()
 
