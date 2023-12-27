@@ -28,6 +28,10 @@ RUN pip install mypy
 
 RUN mypy --install-types --non-interactive
 
+RUN pip install google-api-python-client-stubs
+
+RUN pip install types-pytz
+
 # Download the SpaCy NLP model
 RUN python -m spacy download en_core_web_sm
 

@@ -105,7 +105,7 @@ async def upload_file(drive_service, user_input):
         # For simplicity, taking the first extracted file name and MIME type
         title = file_names[0] if file_names else 'Untitled'
         mime_type = mime_types[0] if mime_types else 'text/plain'
-        folder_name = folder_names[0] if folder_names else 'root'
+        folder_name = folder_names[0] if folder_names else 'My Drive/GPT_ALL'
 
         # Here you should define how you get the actual content to upload
         content = user_input
@@ -115,10 +115,10 @@ async def upload_file(drive_service, user_input):
             io.BytesIO(content.encode()), mimetype=mime_type
         )
 
-        # If the folder_name is not 'root', find the folder ID
-        if folder_name != 'root':
+        # If the folder_name is not 'My Drive', find the folder ID
+        if folder_name != 'My Drive':
             # Search for the folder to get its ID
-            folder_id = 'KitchenSinkGPT'
+            folder_id = 'GPT_ALL'
             file_metadata['parents'] = [folder_id]
 
         file = drive_service.files().create(
@@ -168,25 +168,30 @@ async def download_file(drive_service, user_input, local_path):
         return f"An error occurred while downloading the file: {e}"
 
 
-async def list_files(drive_service, folder_name='root', max_results=10):
+async def list_files(drive_service, folder_name='My Drive/GPT_ALL', max_results=10):
     """
-    List files in Google Drive within a specified folder.
+    List files in Google Drive within a specified folder. If 'folder_name' is 'My Drive',
+    it lists files in 'My Drive', which is the top-level folder.
     """
     try:
-        # Corrected query to search for a folder by name
-        folder_query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder'"
-        folder_response = drive_service.files().list(
-            q=folder_query, fields="files(id, name)"
-        ).execute()
-        folders = folder_response.get('files', [])
+        # If folder_name is 'My Drive',
+        if folder_name == 'My Drive':
+            folder_id = 'My Drive'
+        else:
+            # Corrected query to search for a folder by name
+            folder_query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder'"
+            folder_response = drive_service.files().list(
+                q=folder_query, fields="files(id, name)"
+            ).execute()
+            folders = folder_response.get('files', [])
 
-        # If no folders found, return an empty list
-        if not folders:
-            logging.info("No folder found with the name '%s'.", folder_name)
-            return []
+            # If no folders found, return an empty list
+            if not folders:
+                logging.info("No folder found with the name '%s'.", folder_name)
+                return []
 
-        # Assuming the first folder found is the one we want
-        folder_id = folders[0].get('id')
+            # Assuming the first folder found is the one we want
+            folder_id = folders[0].get('id')
 
         # Query to list files inside the folder
         query = "'%s' in parents" % folder_id
@@ -206,6 +211,20 @@ async def list_files(drive_service, folder_name='root', max_results=10):
     except IOError as e:
         logging.error("An error occurred: %s", e)
         return f"An error occurred while listing the files: {e}"
+
+
+def search_my_drive(drive_service):
+    """
+    Search all files and folders in 'My Drive'.
+    :param drive_service: The authenticated Google Drive service instance.
+    :return: List of files and folders in 'My Drive'.
+    """
+    try:
+        files_info = list_files(drive_service, folder_name='My Drive')
+        return files_info
+    except Exception as e:
+        print(f"An error occurred while searching 'My Drive': {e}")
+        return []
 
 
 drive_tools_list = [
@@ -264,14 +283,14 @@ drive_tools_list = [
         "type": "function",
         "function": {
             "name": "list_files",
-            "description": "List files in a specified Google Drive folder.",
+            "description": "List files in a specified Google Drive folder. If 'folder_name' is 'My Drive', it lists files in 'My Drive', which is the top-level folder.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "folder_name": {
                         "type": "string",
-                        "description": "The name of the folder to list files from. Defaults to 'root' if not specified.",
-                        "default": "root"
+                        "description": "The name of the folder to list files from. Defaults to 'My Drive' (equivalent to 'My Drive') if not specified.",
+                        "default": "My Drive"
                     },
                     "max_results": {
                         "type": "integer",
@@ -283,10 +302,23 @@ drive_tools_list = [
             }
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_my_drive",
+            "description": "Search all files and folders in 'My Drive'.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        },
+    },
 ]
 
 available_functions = {
     "upload_file": upload_file,
     "download_file": download_file,
     "list_files": list_files,
+    "search_my_drive": search_my_drive,
 }

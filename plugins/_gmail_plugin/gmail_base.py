@@ -9,6 +9,7 @@ This module contains the GmailToolsPlugin class.
 """
 
 import os
+import logging
 import functools
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -63,6 +64,7 @@ class GmailPlugin(PluginBase):
         Initialize the plugin.
         """
         await self.load_plugin_tools()
+        logging.info("Gmail plugin initialized.")
 
     async def load_plugin_tools(self):
         """
@@ -75,6 +77,7 @@ class GmailPlugin(PluginBase):
                 func,
                 self.gmail_service
             )
+            logging.info("Loaded %s from email_tools.py", func_name)
 
         # Load tools and functions from calendar_tools.py
         self.tools.extend(calendar_tools_list)
@@ -83,6 +86,7 @@ class GmailPlugin(PluginBase):
                 func,
                 self.calendar_service
             )
+            logging.info("Loaded %s from calendar_tools.py", func_name)
 
         # Load tools and functions from drive_tools.py
         self.tools.extend(drive_tools_list)
@@ -92,7 +96,7 @@ class GmailPlugin(PluginBase):
                 func,
                 self.drive_service
             )
-
+            logging.info("Loaded %s from drive_tools.py", func_name)
         # Load tools and functions from sheets_tools.py
         self.tools.extend(sheets_tools_list)
         for func_name, func in sheets_functions.items():
@@ -101,6 +105,7 @@ class GmailPlugin(PluginBase):
                 func,
                 self.sheets_service
             )
+            logging.info("Loaded %s from sheets_tools.py", func_name)
 
     def _load_credentials(self):
         if os.path.exists("plugins/_gmail_plugin/token.json"):

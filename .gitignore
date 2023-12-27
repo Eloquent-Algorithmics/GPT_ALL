@@ -164,3 +164,8 @@ cython_debug/
 *.log
 .trunk
 *.code-workspace
+uploads/*
+downloads/*
+
+!uploads/.gitkeep
+!downloads/.gitkeep

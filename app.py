@@ -253,7 +253,11 @@ async def run_conversation(
         model=openai_defaults["model"],
     )
     memory.append({"role": "user", "content": original_user_input})
-
+    logging.info(
+        "Memory: %s",
+        json.dumps(memory),
+        extra={"style": "purple"},
+    )
     while len(json.dumps(memory)) > 128000:
         memory.pop(0)
 
@@ -268,24 +272,41 @@ async def run_conversation(
         frequency_penalty=openai_defaults["frequency_penalty"],
         presence_penalty=openai_defaults["presence_penalty"],
     )
+    logging.info(
+        "Response: %s",
+        json.dumps(response),
+        extra={"style": "purple"},
+    )
     response_message = response.choices[0].message
     tool_calls = (
         response_message.tool_calls if hasattr(
             response_message, "tool_calls"
         ) else []
     )
-
+    logging.info(
+        "Response: %s",
+        json.dumps(response_message),
+        extra={"style": "purple"},
+    )
     if response_message.content is not None:
         memory.append(
             {
                 "role": "assistant", "content": response_message.content
             }
         )
-
+    logging.info(
+        "Memory: %s",
+        json.dumps(memory),
+        extra={"style": "purple"},
+    )
     if tool_calls:
         messages.append(response_message)
         executed_tool_call_ids = []
-
+        logging.info(
+            "Tool calls: %s",
+            json.dumps(tool_calls),
+            extra={"style": "purple"},
+        )
         for tool_call in tool_calls:
             function_name = tool_call.function.name
 
@@ -316,16 +337,37 @@ async def run_conversation(
                 function_response = "No response received from the function."
             elif not isinstance(function_response, str):
                 function_response = json.dumps(function_response)
-
+            logging.info(
+                "Function %s response: %s\n",
+                function_name,
+                function_response,
+                extra={"style": "orange"},
+            )
+            logging.info(
+                "Function %s response type: %s\n",
+                function_name,
+                type(function_response),
+                extra={"style": "orange"},
+            )
             function_response_message = {
                 "role": "tool",
                 "name": function_name,
                 "content": function_response,
                 "tool_call_id": tool_call.id,
             }
-
+            logging.info(
+                "Function %s response message: %s\n",
+                function_name,
+                function_response_message,
+                extra={"style": "orange"},
+            )
             messages.append(function_response_message)
             executed_tool_call_ids.append(tool_call.id)
+            logging.info(
+                "Executed tool call ids: %s",
+                executed_tool_call_ids,
+                extra={"style": "purple"},
+            )
 
         # Ensure the next message prompts the assistant to use tool responses
         messages.append(
@@ -333,6 +375,11 @@ async def run_conversation(
                 "role": "user",
                 "content": f"With the data returned from the tool calls, generate any subsequently required requests and tool calls to process and understand the responses from the tool calls until you have verified you have the correct response to answer the original users request that was: {original_user_input}. And then follow up with any additional requests or tool calls to complete task required to fulfill the original request.",
             }
+        )
+        logging.info(
+            "Messages: %s",
+            json.dumps(messages),
+            extra={"style": "purple"},
         )
 
         # Create next completion ensuring to pass the updated messages array
@@ -347,8 +394,17 @@ async def run_conversation(
             frequency_penalty=openai_defaults["frequency_penalty"],
             presence_penalty=openai_defaults["presence_penalty"],
         )
+        logging.info(
+            "Second response: %s",
+            json.dumps(second_response),
+            extra={"style": "purple"},
+        )
         return second_response, memory
     else:
+        logging.info(
+            "No tool calls found in response.",
+            extra={"style": "purple"},
+        )
         return response, memory
 
 
