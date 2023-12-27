@@ -15,8 +15,6 @@ from pathlib import Path
 import json
 import asyncio
 import argparse
-import threading
-from moviepy.editor import VideoFileClip
 from openai import AsyncOpenAI
 import pytz
 import tzlocal
@@ -58,40 +56,6 @@ openai_defaults = {
     "frequency_penalty": 0,
     "presence_penalty": 0,
 }
-
-# Configure logging based on the settings from .env
-if LOGGING_ENABLED:
-    # Set the logging level based on the LOGGING_LEVEL string
-    level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
-    # Configure logging with or without a log file
-    if LOGGING_FILE:
-        logging.basicConfig(
-            level=level,
-            format=LOGGING_FORMAT,
-            filename=LOGGING_FILE
-        )
-    else:
-        logging.basicConfig(level=level, format=LOGGING_FORMAT)
-else:
-    logging.disable(logging.CRITICAL)
-
-
-def play_video(video_path):
-    """
-    This function plays a intro video in a separate thread.
-
-    Args:
-        video_path (str): The path to the video file.
-    """
-
-    def video_player(path):
-        clip = VideoFileClip(path)
-        clip.preview()
-        clip.close()
-
-    # Create a thread to play the video
-    video_thread = threading.Thread(target=video_player, args=(video_path,))
-    video_thread.start()
 
 
 async def get_current_date_time() -> str:
@@ -213,7 +177,11 @@ async def follow_conversation(
                 "content": "I'm not sure how to respond to that."
             }
         )
-
+    logging.info(
+        "Memory: %s",
+        json.dumps(memory),
+        extra={"style": "purple"},
+    )
     return memory
 
 
@@ -412,6 +380,26 @@ async def main():
     """
     Main function.
     """
+    # Configure logging based on the settings from .env
+    if LOGGING_ENABLED:
+        # Set the logging level based on the LOGGING_LEVEL string
+        level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
+        # Configure logging with or without a log file
+        if LOGGING_FILE:
+            logging.basicConfig(
+                level=level,
+                format=LOGGING_FORMAT,
+                filename=LOGGING_FILE
+            )
+        else:
+            logging.basicConfig(level=level, format=LOGGING_FORMAT)
+
+        # Set a higher logging level for a package to prevent DEBUG logs
+        logging.getLogger('markdown_it').setLevel(logging.INFO)
+        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+    else:
+        logging.disable(logging.CRITICAL)
+
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
@@ -420,15 +408,9 @@ async def main():
     parser.add_argument(
         "--talk", action="store_true", help="Use TTS for the final response"
     )
-    parser.add_argument(
-        "--intro", action="store_true", help="Play an intro video at startup"
-    )
     args = parser.parse_args()
 
     use_tts = args.talk
-
-    if args.intro:
-        play_video("intro_video.mp4")
 
     console.print(Markdown("# 👋  GPT_ALL 👋"), style="bold blue")
 
@@ -504,7 +486,10 @@ async def main():
                 "role": "system",
                 "content": MAIN_SYSTEM_PROMPT,
             },
-            {"role": "user", "content": f"{user_input}"},
+            {
+                "role": "user",
+                "content": user_input,
+            },
         ]
 
         # Start the spinner
@@ -540,12 +525,7 @@ async def main():
             console.print("\nI'm not sure how to help with that.", style="red")
 
         # Remove tools from the tools list after processing
-        tools[:] = [
-            tool
-            for tool in tools
-            if tool.get("function", {}).get("name", "").lower()
-            not in user_input.lower()
-        ]
+        tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
 
 
 if __name__ == "__main__":

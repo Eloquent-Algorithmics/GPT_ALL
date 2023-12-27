@@ -52,10 +52,14 @@ async def enable_plugins(available_functions, tools):
 
                         # Check if the plugin is enabled
                         env_var_name = "ENABLE_%s" % cls.__name__.upper()
-                        plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"  # Define plugin_enabled here
-                        logging.info("Environment variable %s is set to %s", env_var_name, plugin_enabled)
+                        plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"
+                        logging.info(
+                            "Environment variable %s is set to %s",
+                            env_var_name,
+                            plugin_enabled
+                        )
 
-                        if plugin_enabled:
+                        if plugin_enabled and cls.__name__ not in available_functions:
                             logging.info("Enabling plugin: %s", cls.__name__)
 
                             # Instantiate the plugin
@@ -65,11 +69,17 @@ async def enable_plugins(available_functions, tools):
                             # Get the tools from the plugin
                             plugin_tools = plugin.get_tools()
                             # Add the plugin's functions and tools
-                            available_functions.update(plugin.get_available_functions())
+                            available_functions.update(
+                                plugin.get_available_functions()
+                            )
                             tools.extend(plugin_tools)
-                            logging.info("Enabled plugin: %s with tools: %s", cls.__name__, plugin_tools)
+                            logging.info(
+                                "Enabled plugin: %s with tools: %s",
+                                cls.__name__,
+                                plugin_tools
+                            )
                         else:
-                            logging.info("Plugin %s is not enabled.", cls.__name__)
+                            logging.info("Plugin %s is not enabled or already added.", cls.__name__)
 
     logging.info("Available functions: %s", available_functions)
     logging.info("Tools: %s", tools)

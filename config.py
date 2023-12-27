@@ -8,10 +8,10 @@ from rich.spinner import Spinner
 
 # Load the .env file
 
-load_dotenv()
+load_dotenv(verbose=True)
 
 # Define the live_spinner
-live_spinner = Live(Spinner("aesthetic", " "), auto_refresh=True)
+live_spinner = Live(Spinner("monkey", " "), auto_refresh=True)
 
 
 # Logging configuration
