@@ -147,8 +147,8 @@ async def follow_conversation(
     """
     ind = min(mem_size, len(memory))
     if ind == 0:
-        memory = [{"role": "system", "content": MAIN_SYSTEM_PROMPT}]
-    memory.append({"role": "user", "content": user_text})
+        memory = [{"role": "system", "content": f"{MAIN_SYSTEM_PROMPT}"}]
+    memory.append({"role": "user", "content": f"{user_text}"})
     while (
         not check_under_context_limit(
             join_messages(memory),
@@ -178,7 +178,7 @@ async def follow_conversation(
             }
         )
     logging.info(
-        "Memory: %s",
+        "Memory from line 180: %s",
         json.dumps(memory),
         extra={"style": "purple"},
     )
@@ -214,21 +214,19 @@ async def run_conversation(
     """
     Run the conversation.
     """
+    # Update memory with the conversation so far
     memory = await follow_conversation(
         user_text=original_user_input,
         memory=memory,
         mem_size=mem_size,
         model=openai_defaults["model"],
     )
-    memory.append({"role": "user", "content": original_user_input})
-    logging.info(
-        "Memory: %s",
-        json.dumps(memory),
-        extra={"style": "purple"},
-    )
+
+    # Trim memory if it exceeds the token limit
     while len(json.dumps(memory)) > 128000:
         memory.pop(0)
 
+    # Create a response from the model
     response = await base_client.chat.completions.create(
         model=openai_defaults["model"],
         messages=memory[-mem_size:],
@@ -240,140 +238,74 @@ async def run_conversation(
         frequency_penalty=openai_defaults["frequency_penalty"],
         presence_penalty=openai_defaults["presence_penalty"],
     )
-    logging.info(
-        "Response: %s",
-        json.dumps(response),
-        extra={"style": "purple"},
-    )
+
+    # Process the response from the model
     response_message = response.choices[0].message
     tool_calls = (
-        response_message.tool_calls if hasattr(
-            response_message, "tool_calls"
-        ) else []
+        response_message.tool_calls if hasattr(response_message, "tool_calls") else []
     )
-    logging.info(
-        "Response: %s",
-        json.dumps(response_message),
-        extra={"style": "purple"},
-    )
+
+    # Append the assistant's response to memory
     if response_message.content is not None:
-        memory.append(
-            {
-                "role": "assistant", "content": response_message.content
-            }
-        )
-    logging.info(
-        "Memory: %s",
-        json.dumps(memory),
-        extra={"style": "purple"},
-    )
+        memory.append({"role": "assistant", "content": response_message.content})
+
+    # Process tool calls if any
     if tool_calls:
-        messages.append(response_message)
         executed_tool_call_ids = []
-        logging.info(
-            "Tool calls: %s",
-            json.dumps(tool_calls),
-            extra={"style": "purple"},
-        )
+
         for tool_call in tool_calls:
             function_name = tool_call.function.name
 
             if function_name not in available_functions:
-                console.print(
-                    f"Function {function_name} is not available.", style="red"
-                )
+                console.print(f"Function {function_name} is not available.", style="red")
                 continue
 
             function_to_call = available_functions[function_name]
             function_args = json.loads(tool_call.function.arguments)
 
-            logging.info(
-                "Calling function: %s args: %s",
-                function_name,
-                function_args,
-                extra={"style": "purple"},
-            )
+            # Call the function and get the response
             function_response = await function_to_call(**function_args)
-            logging.info(
-                "Function %s returned: %s\n",
-                function_name,
-                function_response,
-                extra={"style": "orange"},
-            )
 
+            # Handle non-string responses
             if function_response is None:
                 function_response = "No response received from the function."
             elif not isinstance(function_response, str):
                 function_response = json.dumps(function_response)
-            logging.info(
-                "Function %s response: %s\n",
-                function_name,
-                function_response,
-                extra={"style": "orange"},
-            )
-            logging.info(
-                "Function %s response type: %s\n",
-                function_name,
-                type(function_response),
-                extra={"style": "orange"},
-            )
+
+            # Append the tool response to messages and memory
             function_response_message = {
                 "role": "tool",
                 "name": function_name,
                 "content": function_response,
                 "tool_call_id": tool_call.id,
             }
-            logging.info(
-                "Function %s response message: %s\n",
-                function_name,
-                function_response_message,
-                extra={"style": "orange"},
-            )
             messages.append(function_response_message)
+            memory.append({"role": "assistant", "content": function_response})
             executed_tool_call_ids.append(tool_call.id)
-            logging.info(
-                "Executed tool call ids: %s",
-                executed_tool_call_ids,
-                extra={"style": "purple"},
+
+            messages.append( 
+                {
+                    "role": "system",
+                    "content": f"at this step, use the responses from the tool calls to generate and send any subsequently required requests and or tool calls to process and understand the responses from all the tool calls until you have verified you have the all the information and data processed to correctly respond to the original request which was: {original_user_input}. Then continue following the next steps in the plan with any additional requests or tool calls to complete the tasks required to fulfill the original request.",
+                }
+            )
+            # Create next completion ensuring to pass the updated messages array
+            second_response = await base_client.chat.completions.create(
+                model=openai_defaults["model"],
+                messages=messages + memory[-mem_size:],  # Include the user message first, followed by memory
+                tools=tools,
+                tool_choice="auto",
+                temperature=openai_defaults["temperature"],
+                top_p=openai_defaults["top_p"],
+                max_tokens=openai_defaults["max_tokens"],
+                frequency_penalty=openai_defaults["frequency_penalty"],
+                presence_penalty=openai_defaults["presence_penalty"],
             )
 
-        # Ensure the next message prompts the assistant to use tool responses
-        messages.append(
-            {
-                "role": "user",
-                "content": f"With the data returned from the tool calls, generate any subsequently required requests and tool calls to process and understand the responses from the tool calls until you have verified you have the correct response to answer the original users request that was: {original_user_input}. And then follow up with any additional requests or tool calls to complete task required to fulfill the original request.",
-            }
-        )
-        logging.info(
-            "Messages: %s",
-            json.dumps(messages),
-            extra={"style": "purple"},
-        )
-
-        # Create next completion ensuring to pass the updated messages array
-        second_response = await base_client.chat.completions.create(
-            model=openai_defaults["model"],
-            messages=messages,
-            tools=tools,
-            tool_choice="auto",
-            temperature=openai_defaults["temperature"],
-            top_p=openai_defaults["top_p"],
-            max_tokens=openai_defaults["max_tokens"],
-            frequency_penalty=openai_defaults["frequency_penalty"],
-            presence_penalty=openai_defaults["presence_penalty"],
-        )
-        logging.info(
-            "Second response: %s",
-            json.dumps(second_response),
-            extra={"style": "purple"},
-        )
-        return second_response, memory
-    else:
-        logging.info(
-            "No tool calls found in response.",
-            extra={"style": "purple"},
-        )
-        return response, memory
+            return second_response, memory
+        else:
+            # If there are no tool calls, return the original response and memory
+            return response, memory
 
 
 async def main():
@@ -395,8 +327,9 @@ async def main():
             logging.basicConfig(level=level, format=LOGGING_FORMAT)
 
         # Set a higher logging level for a package to prevent DEBUG logs
-        logging.getLogger('markdown_it').setLevel(logging.INFO)
+        logging.getLogger('markdown_it').setLevel(logging.ERROR)
         logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+        logging.getLogger('httpcore').setLevel(logging.ERROR)
     else:
         logging.disable(logging.CRITICAL)
 
@@ -462,7 +395,11 @@ async def main():
 
     # Initialize the conversation memory
     memory = []
-
+    logging.info(
+        "Memory from line 407: %s",
+        json.dumps(memory),
+        extra={"style": "purple"},
+    )
     # Main Loop
     while True:
         # Ask the user for input
@@ -484,17 +421,21 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": MAIN_SYSTEM_PROMPT,
+                "content": f"{MAIN_SYSTEM_PROMPT}",
             },
             {
                 "role": "user",
-                "content": user_input,
+                "content": f"{user_input}",
             },
         ]
+        logging.info(
+            "Messages from line 440: %s",
+            json.dumps(messages),
+            extra={"style": "purple"},
+        )
 
-        # Start the spinner
         with live_spinner:
-            # Start the spinner
+
             live_spinner.start()
 
             # Pass the user input and memory to the run_conversation function
@@ -504,10 +445,13 @@ async def main():
                 available_functions=available_functions,
                 original_user_input=user_input,
                 mem_size=10,
-                memory=memory,  # Pass the memory variable
+                memory=memory,
             )
-
-            # Stop the spinner
+            logging.info(
+                "Final response from line 459: %s",
+                final_response,
+                extra={"style": "purple"},
+            )
             live_spinner.stop()
 
         # Print the final response from the model or use TTS
@@ -526,6 +470,11 @@ async def main():
 
         # Remove tools from the tools list after processing
         tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
+        logging.info(
+            "Tools from line 482: %s",
+            json.dumps(tools),
+            extra={"style": "purple"},
+        )
 
 
 if __name__ == "__main__":
