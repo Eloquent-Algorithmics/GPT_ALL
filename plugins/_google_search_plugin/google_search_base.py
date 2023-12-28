@@ -8,6 +8,7 @@
 This module defines the Google Search plugin.
 """
 
+import logging
 from plugins.plugin_base import PluginBase
 
 from plugins._google_search_plugin.google_search_tools import (
@@ -21,6 +22,11 @@ class GoogleSearchPlugin(PluginBase):
     """
     This class defines the Google Search plugin.
     """
+
+    def __init__(self):
+        super().__init__()
+        # Define a logger for this plugin
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     async def initialize(self):
         """

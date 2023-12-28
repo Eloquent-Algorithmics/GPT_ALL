@@ -1,3 +1,4 @@
+
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: app.py
@@ -24,6 +25,7 @@ from rich.markdown import Markdown
 from rich.prompt import Prompt
 from output_methods.audio_pyttsx3 import tts_output
 from plugins.plugins_enabled import enable_plugins
+from utils.system_utilities import clear_log_files
 from config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
@@ -56,6 +58,14 @@ openai_defaults = {
     "frequency_penalty": 0,
     "presence_penalty": 0,
 }
+
+# Configure root logger to log to GPT_ALL.log
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    filename='GPT_ALL.log',
+    filemode='w'
+)
 
 
 async def get_current_date_time() -> str:
@@ -263,6 +273,12 @@ async def run_conversation(
             function_to_call = available_functions[function_name]
             function_args = json.loads(tool_call.function.arguments)
 
+            # Append a system message indicating a tool call
+            messages.append({
+                "role": "system",
+                "content": f"This is a tool call for the {function_name} function."
+            })
+
             # Call the function and get the response
             function_response = await function_to_call(**function_args)
 
@@ -283,29 +299,29 @@ async def run_conversation(
             memory.append({"role": "assistant", "content": function_response})
             executed_tool_call_ids.append(tool_call.id)
 
-            messages.append( 
+            messages.append(
                 {
                     "role": "system",
-                    "content": f"at this step, use the responses from the tool calls to generate and send any subsequently required requests and or tool calls to process and understand the responses from all the tool calls until you have verified you have the all the information and data processed to correctly respond to the original request which was: {original_user_input}. Then continue following the next steps in the plan with any additional requests or tool calls to complete the tasks required to fulfill the original request.",
-                }
-            )
-            # Create next completion ensuring to pass the updated messages array
-            second_response = await base_client.chat.completions.create(
-                model=openai_defaults["model"],
-                messages=messages + memory[-mem_size:],  # Include the user message first, followed by memory
-                tools=tools,
-                tool_choice="auto",
-                temperature=openai_defaults["temperature"],
-                top_p=openai_defaults["top_p"],
-                max_tokens=openai_defaults["max_tokens"],
-                frequency_penalty=openai_defaults["frequency_penalty"],
-                presence_penalty=openai_defaults["presence_penalty"],
+                    "content": f"use the responses from the tool calls to generate and send any subsequently required requests and or tool calls you will need to process and understand the responses from all the tool calls until you have verified you have the all the information and data processed to correctly respond to the original request which was: {original_user_input}. Then continue following the next steps in the plan with any additional requests or tool calls to complete the tasks required to fulfill the original request.",
+                },
             )
 
-            return second_response, memory
-        else:
-            # If there are no tool calls, return the original response and memory
-            return response, memory
+        second_response = await base_client.chat.completions.create(
+            model=openai_defaults["model"],
+            messages=messages + memory[-mem_size:],
+            tools=tools,
+            tool_choice="auto",
+            temperature=openai_defaults["temperature"],
+            top_p=openai_defaults["top_p"],
+            max_tokens=openai_defaults["max_tokens"],
+            frequency_penalty=openai_defaults["frequency_penalty"],
+            presence_penalty=openai_defaults["presence_penalty"],
+        )
+
+        return second_response, memory
+    else:
+        # If there are no tool calls, return the original response and memory
+        return response, memory
 
 
 async def main():
@@ -391,12 +407,12 @@ async def main():
     ]
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
-    available_functions, tools = await enable_plugins(available_functions, tools)
+    available_functions, tools, enabled_plugins_log_paths = await enable_plugins(available_functions, tools)
 
     # Initialize the conversation memory
     memory = []
     logging.info(
-        "Memory from line 407: %s",
+        "Memory from line 414: %s",
         json.dumps(memory),
         extra={"style": "purple"},
     )
@@ -417,11 +433,18 @@ async def main():
             display_help(tools)
             continue
 
+        # Check if the user wants to clear the log files
+        elif user_input.lower() == "/clearlog":
+            # Assume 'enabled_plugins' is a list of enabled plugin names
+            clear_logs_response = await clear_log_files(enabled_plugins)
+            console.print("\n" + clear_logs_response, style="green")
+            continue
+
         # Prepare the conversation messages
         messages = [
             {
                 "role": "system",
-                "content": f"{MAIN_SYSTEM_PROMPT}",
+                "content": f"Functions and tools available to you: {available_functions}, {tools}, {MAIN_SYSTEM_PROMPT}",
             },
             {
                 "role": "user",
@@ -429,7 +452,7 @@ async def main():
             },
         ]
         logging.info(
-            "Messages from line 440: %s",
+            "Messages from line 455: %s",
             json.dumps(messages),
             extra={"style": "purple"},
         )
@@ -448,7 +471,7 @@ async def main():
                 memory=memory,
             )
             logging.info(
-                "Final response from line 459: %s",
+                "Final response from line 473: %s",
                 final_response,
                 extra={"style": "purple"},
             )
@@ -471,11 +494,11 @@ async def main():
         # Remove tools from the tools list after processing
         tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
         logging.info(
-            "Tools from line 482: %s",
+            "Tools from line 497: %s",
             json.dumps(tools),
             extra={"style": "purple"},
         )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.get_event_loop().run_until_complete(main())

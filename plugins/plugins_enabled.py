@@ -38,10 +38,11 @@ enable_plugins_logger.addHandler(file_handler)
 # Defines the enable plugins function
 async def enable_plugins(available_functions, tools):
     """
-    Enable plugins.
+    Enable plugins and return a list of logger names.
     """
     plugins_folder = "plugins"
     enable_plugins_logger.info("Starting to enable plugins...")
+    logger_names = []
 
     # Recursively walk through the plugins directory
     for root, dirs, files in os.walk(plugins_folder):
@@ -95,9 +96,20 @@ async def enable_plugins(available_functions, tools):
                                 cls.__name__,
                                 plugin_tools
                             )
+                            # Add the logger name to the list
+                            logger_name = f"{root}.{cls.__name__}"
+                            logger_names.append(logger_name)
+                            enable_plugins_logger.info(
+                                "Added logger name: %s", logger_name
+                            )
+                            enabled_plugins_log_paths = {}
+                            for logger_name in logger_names:
+                                log_file_path = os.path.join(log_directory, f"{logger_name}.log")
+                                enabled_plugins_log_paths[logger_name] = log_file_path
+                            return available_functions, tools, enabled_plugins_log_paths
                         else:
                             enable_plugins_logger.info("Plugin %s is not enabled or already added.", cls.__name__)
 
     enable_plugins_logger.info("Available functions: %s", available_functions)
     enable_plugins_logger.info("Tools: %s", tools)
-    return available_functions, tools
+    return available_functions, tools, logger_names
