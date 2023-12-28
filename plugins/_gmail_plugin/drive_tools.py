@@ -23,7 +23,7 @@ from plugins._gmail_plugin.errors import FolderNotFoundError
 nlp = spacy.load("en_core_web_sm")
 
 # Configure a separate logger for the Google Drive functions and tools
-drive_tools_logger = logging.getLogger('Google Drive Tools')
+drive_tools_logger = logging.getLogger('gDrive_Tools')
 drive_tools_logger.setLevel(logging.INFO)
 
 # Create a log directory if it doesn't exist
