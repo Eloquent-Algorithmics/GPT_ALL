@@ -163,5 +163,5 @@ cython_debug/
 *.ini
 *.json
 token.json
-logs/
+*.log
 .trunk
