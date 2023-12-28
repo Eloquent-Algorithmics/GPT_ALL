@@ -24,10 +24,6 @@ COPY requirements.txt /workspace/
 # Install the Python requirements
 RUN pip install --no-cache-dir -r /workspace/requirements.txt
 
-RUN pip install mypy
-
-RUN mypy --install-types --non-interactive
-
 # Download the SpaCy NLP model
 RUN python -m spacy download en_core_web_sm
 

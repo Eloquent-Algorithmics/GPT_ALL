@@ -16,6 +16,14 @@ from bs4 import BeautifulSoup
 from googleapiclient.errors import HttpError
 
 
+# Configure logging for the module
+logging.basicConfig(
+    filename='email_tools.log',
+    level=logging.INFO,
+    format='%(levelname)s:%(message)s'
+)
+
+
 async def read_email(gmail_service):
     """Retrieve a list of emails from Gmail."""
     try:
@@ -30,17 +38,18 @@ async def read_email(gmail_service):
 
             sender, subject, body = await extract_email_data(msg)
 
-            snippet = body[:100] if body else 'N/A'
+            snippet = body[:200] if body else 'N/A'
             emails.append(
                 {
                     'id': message['id'], 'subject': subject,
                     'from': sender, 'snippet': snippet
                 }
             )
+        logging.info("Emails from line 48: %s", emails)
         return emails
 
     except HttpError as error:
-        logging.error("An error occurred: %s", error)
+        logging.error("An error occurred from line 52: %s", error)
         return []
 
 
@@ -67,9 +76,10 @@ async def send_email(gmail_service, **kwargs):
         send_message = (
             gmail_service.users().messages().send(userId="me", body=raw_message).execute()
         )
+        logging.info("Message Id from line 79: %s", send_message["id"])
         return f"Message Id: {send_message['id']}"
     except HttpError as error:
-        logging.error("An error occurred: %s", error)
+        logging.error("An error occurred from line 83: %s", error)
         return f"An error occurred while sending the email: {error}"
 
 
@@ -78,7 +88,7 @@ async def delete_email(gmail_service, message_id):
     try:
         gmail_service.users().messages().delete(userId='me', id=message_id).execute()
     except HttpError as error:
-        logging.error("An error occurred: %s", error)
+        logging.error("An error occurred from line 91: %s", error)
 
 
 async def extract_email_data(msg):
@@ -93,6 +103,7 @@ async def extract_email_data(msg):
             subject = header['value']
 
     body = await _get_email_body(msg['payload'])
+    logging.info("Email body from line 107: %s", body)
     return sender, subject, body
 
 
@@ -105,10 +116,12 @@ async def _get_email_body(payload):
             part_body = part['body'].get('data', '')
             # Await the coroutine to get the decoded body
             body += await _decode_base64(part_body, part['mimeType'])
+        logging.info("Email body from line 120: %s", body)
         return body
     else:
         body = payload['body'].get('data', '')
         # Await the coroutine to get the decoded body
+        logging.info("Email body from line 124: %s", body)
         return await _decode_base64(body)
 
 
@@ -118,13 +131,16 @@ async def _decode_base64(data, mime_type='text/plain'):
         decoded_body_bytes = base64.urlsafe_b64decode(data)
         decoded_body = decoded_body_bytes.decode(errors='ignore')
     except binascii.Error as e:
-        logging.error("Error decoding base64-encoded data: %s", e)
+        logging.error(
+            "Error decoding base64-encoded data from line 134: %s", e
+        )
         decoded_body = ''
 
     if mime_type == 'text/html':
         soup = BeautifulSoup(decoded_body, 'html.parser')
         return soup.get_text()
     else:
+        logging
         return decoded_body
 
 
