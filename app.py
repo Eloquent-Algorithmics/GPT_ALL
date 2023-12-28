@@ -70,6 +70,10 @@ if LOGGING_ENABLED:
             format=LOGGING_FORMAT,
             filename=LOGGING_FILE
         )
+        logging.getLogger('httpcore.http11').setLevel(logging.INFO)
+        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
+        logging.getLogger('httpcore').setLevel(logging.WARNING)
+        logging.getLogger('markdown_it.rules_block').setLevel(logging.WARNING)
     else:
         logging.basicConfig(level=level, format=LOGGING_FORMAT)
 else:
