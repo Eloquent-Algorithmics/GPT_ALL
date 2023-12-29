@@ -59,11 +59,11 @@ openai_defaults = {
     "presence_penalty": 0,
 }
 
-# Configure root logger to log to GPT_ALL.log
+# Configure root logger to log to logs/GPT_ALL.log
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filename='GPT_ALL.log',
+    filename='logs/GPT_ALL.log',
     filemode='w'
 )
 
@@ -420,11 +420,11 @@ async def main():
     while True:
         # Ask the user for input
         user_input = Prompt.ask(
-            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]exit or quit[/bold yellow])",
+            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
 
         # Check if the user wants to exit the program
-        if user_input.lower() == "exit":
+        if user_input.lower() == "quit":
             console.print("\nExiting the program.", style="bold red")
             break
 
