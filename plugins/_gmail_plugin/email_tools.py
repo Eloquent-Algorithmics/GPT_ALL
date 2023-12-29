@@ -134,34 +134,34 @@ email_tools_list = [
         "type": "function",
         "function": {
             "name": "read_email",
-            "description": "Retrieves emails from the users Gmail.",
+            "description": "Searches and retrieves emails from the users Gmail.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     # Search for messages matching a user obejct ID: `user_object_id:`
                     "user_object_id": {
                         "type": "string",
-                        "description": "Optional object ID to filter emails.",
+                        "description": "Searches for messages by object ID to filter returned emails.",
                     },
                     # Search for messages matching a query: `query:`
                     "query": {
                         "type": "string",
-                        "description": "Optional query to filter emails.",
+                        "description": "Search query to filter emails by: `query:`",
                     },
                     # Specify words in the subject line to search for:`subject:`
                     "subject": {
                         "type": "string",
-                        "description": "Words in the subject line to filter by `subject:`",
+                        "description": "Words in the subject line to filter by: `subject:`",
                     },
                     # Specify a recipient to search for: `to:`
                     "to": {
                         "type": "string",
-                        "description": "Specify a recipient to filter by `to:`",
+                        "description": "Specify a recipient to filter by: `to:`",
                     },
                     # Specify the sender to search for: `from:`
                     "from": {
                         "type": "string",
-                        "description": "Specify the sender to filter by `from:`",
+                        "description": "Specify the sender to filter by: `from:`",
                     },
                     # Specify a recipient to filter: `cc:`
                     "cc": {
