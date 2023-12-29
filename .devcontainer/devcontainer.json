@@ -1,10 +1,26 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/miniconda
 {
-    "name": "(ksGPT)",
+    "name": "(GPT_ALL)",
     "build": {
         "context": "..",
         "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+          "installZsh": "true",
+          "username": "vscode",
+          "userUid": "1000",
+          "userGid": "1000",
+          "upgradePackages": "true"
+        },
+        "ghcr.io/devcontainers/features/desktop-lite:1": {},
+        "ghcr.io/devcontainers/features/python:1": "none",
+        "ghcr.io/devcontainers/features/node:1": "none",
+        "ghcr.io/devcontainers/features/git:1": {
+          "version": "latest",
+          "ppa": "false"
+        }
     },
     // Configure tool-specific properties.
     "customizations": {
@@ -14,7 +30,18 @@
             "settings": {
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
                 "python.testing.pytestEnabled": true,
-                "python.testing.unittestEnabled": false
+                "python.testing.unittestEnabled": true,
+                "[python]": {
+                    "diffEditor.ignoreTrimWhitespace": false,
+                    "gitlens.codeLens.symbolScopes": [
+                        "!Module"
+                    ],
+                    "editor.formatOnSave": true,
+                    "editor.formatOnType": false,
+                    "editor.formatOnPaste": false,
+                    "editor.wordBasedSuggestions": false,
+                    "editior.defaultFormatter": "charliermarsh.ruff"
+                }
             },
             "extensions": [
                 "ms-python.python",
@@ -38,7 +65,10 @@
                 "ms-vscode.live-server",
                 "DavidAnson.vscode-markdownlint",
                 "charliermarsh.ruff",
-                "stylelint.vscode-stylelint"
+                "stylelint.vscode-stylelint",
+                "VisualStudioExptTeam.vscodeintellicode",
+                "VisualStudioExptTeam.intellicode-api-usage-examples",
+                "VisualStudioExptTeam.vscodeintellicode-completions"
             ]
         }
     },

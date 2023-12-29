@@ -71,11 +71,11 @@ To enable specific plugins or features, modify the `.env` file in your project d
 
 ### Usage
 
-Run ksGPT using:
+Run GPT_ALL using:
 
 ```bash
 
-conda activate ksGPT
+conda activate GPT_ALL
 
 python -m app
 

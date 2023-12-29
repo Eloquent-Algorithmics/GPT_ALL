@@ -18,15 +18,13 @@ RUN apt-get install -y \
  && rm -rf /var/lib/apt/lists/* \
  && pip install --upgrade pip
 
+RUN python3 -m pip install --upgrade setuptools
+
 # Copy the requirements.txt file into the container at /workspace
 COPY requirements.txt /workspace/
 
 # Install the Python requirements
 RUN pip install --no-cache-dir -r /workspace/requirements.txt
-
-RUN pip install mypy
-
-RUN mypy --install-types --non-interactive
 
 # Download the SpaCy NLP model
 RUN python -m spacy download en_core_web_sm

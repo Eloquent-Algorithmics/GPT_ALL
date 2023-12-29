@@ -9,6 +9,7 @@ This is the Accuweather plugin Base class.
 """
 
 import os
+import logging
 import functools
 from plugins.plugin_base import PluginBase
 from plugins._accuweather_plugin.accuweather_tools import (

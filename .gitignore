@@ -160,8 +160,13 @@ cython_debug/
 .idea/
 .vscode
 *.ini
-*.ini
 *.json
 token.json
 *.log
 .trunk
+*.code-workspace
+uploads/*.
+downloads/*.
+
+!uploads/.gitkeep
+!downloads/.gitkeep

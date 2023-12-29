@@ -50,9 +50,6 @@ async def get_next_calendar_event(calendar_service):
     except HttpError as error:
         logging.error("An error occurred: %s", error)
         return "An error occurred while retrieving events."
-    except Exception as e:
-        logging.exception("An error occurred retrieving next event. %s", e)
-        return "An unexpected error occurred."
 
 
 calendar_tools_list = [

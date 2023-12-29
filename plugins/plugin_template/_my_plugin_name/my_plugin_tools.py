@@ -1,8 +1,11 @@
-# Filename: my_tools.py
-# Path: plugins/_my_plugin/my_tools.py
+
+# !/usr/bin/env python
+# coding: utf-8
+# Filename: my_plugin_tools.py
+# Path: plugins/plugin_template/_my_plugin_name/my_plugin_tools.py
 
 """
-Tools for interacting with an external API.
+This script contains the function and tool definitions.
 """
 
 import os
@@ -14,8 +17,10 @@ import aiohttp
 TOOL_URL = os.getenv("MY_API_URL", "https://api.example.com/v1")
 TOOL_API_KEY = os.getenv("MY_API_KEY")
 
+
 # Define the function that will be called by the application
-async def get_data_from_my_api(url=TOOL_URL, api_key=TOOL_API_KEY, **kwargs) -> List:
+async def get_data_from_my_api(
+        url=TOOL_URL, api_key=TOOL_API_KEY, **kwargs) -> List:
     """
     Fetch data from the external API based on query parameters.
     """

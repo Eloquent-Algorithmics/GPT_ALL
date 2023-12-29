@@ -1,3 +1,4 @@
+
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: app.py
@@ -15,8 +16,6 @@ from pathlib import Path
 import json
 import asyncio
 import argparse
-import threading
-from moviepy.editor import VideoFileClip
 from openai import AsyncOpenAI
 import pytz
 import tzlocal
@@ -26,6 +25,7 @@ from rich.markdown import Markdown
 from rich.prompt import Prompt
 from output_methods.audio_pyttsx3 import tts_output
 from plugins.plugins_enabled import enable_plugins
+from utils.system_utilities import clear_log_files
 from config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
@@ -59,39 +59,13 @@ openai_defaults = {
     "presence_penalty": 0,
 }
 
-# Configure logging based on the settings from .env
-if LOGGING_ENABLED:
-    # Set the logging level based on the LOGGING_LEVEL string
-    level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
-    # Configure logging with or without a log file
-    if LOGGING_FILE:
-        logging.basicConfig(
-            level=level,
-            format=LOGGING_FORMAT,
-            filename=LOGGING_FILE
-        )
-    else:
-        logging.basicConfig(level=level, format=LOGGING_FORMAT)
-else:
-    logging.disable(logging.CRITICAL)
-
-
-def play_video(video_path):
-    """
-    This function plays a intro video in a separate thread.
-
-    Args:
-        video_path (str): The path to the video file.
-    """
-
-    def video_player(path):
-        clip = VideoFileClip(path)
-        clip.preview()
-        clip.close()
-
-    # Create a thread to play the video
-    video_thread = threading.Thread(target=video_player, args=(video_path,))
-    video_thread.start()
+# Configure root logger to log to logs/GPT_ALL.log
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    filename='logs/GPT_ALL.log',
+    filemode='w'
+)
 
 
 async def get_current_date_time() -> str:
@@ -183,8 +157,8 @@ async def follow_conversation(
     """
     ind = min(mem_size, len(memory))
     if ind == 0:
-        memory = [{"role": "system", "content": MAIN_SYSTEM_PROMPT}]
-    memory.append({"role": "user", "content": user_text})
+        memory = [{"role": "system", "content": f"{MAIN_SYSTEM_PROMPT}"}]
+    memory.append({"role": "user", "content": f"{user_text}"})
     while (
         not check_under_context_limit(
             join_messages(memory),
@@ -213,7 +187,11 @@ async def follow_conversation(
                 "content": "I'm not sure how to respond to that."
             }
         )
-
+    logging.info(
+        "Memory from line 180: %s",
+        json.dumps(memory),
+        extra={"style": "purple"},
+    )
     return memory
 
 
@@ -246,17 +224,19 @@ async def run_conversation(
     """
     Run the conversation.
     """
+    # Update memory with the conversation so far
     memory = await follow_conversation(
         user_text=original_user_input,
         memory=memory,
         mem_size=mem_size,
         model=openai_defaults["model"],
     )
-    memory.append({"role": "user", "content": original_user_input})
 
+    # Trim memory if it exceeds the token limit
     while len(json.dumps(memory)) > 128000:
         memory.pop(0)
 
+    # Create a response from the model
     response = await base_client.chat.completions.create(
         model=openai_defaults["model"],
         messages=memory[-mem_size:],
@@ -268,77 +248,67 @@ async def run_conversation(
         frequency_penalty=openai_defaults["frequency_penalty"],
         presence_penalty=openai_defaults["presence_penalty"],
     )
+
+    # Process the response from the model
     response_message = response.choices[0].message
     tool_calls = (
-        response_message.tool_calls if hasattr(
-            response_message, "tool_calls"
-        ) else []
+        response_message.tool_calls if hasattr(response_message, "tool_calls") else []
     )
 
+    # Append the assistant's response to memory
     if response_message.content is not None:
-        memory.append(
-            {
-                "role": "assistant", "content": response_message.content
-            }
-        )
+        memory.append({"role": "assistant", "content": response_message.content})
 
+    # Process tool calls if any
     if tool_calls:
-        messages.append(response_message)
         executed_tool_call_ids = []
 
         for tool_call in tool_calls:
             function_name = tool_call.function.name
 
             if function_name not in available_functions:
-                console.print(
-                    f"Function {function_name} is not available.", style="red"
-                )
+                console.print(f"Function {function_name} is not available.", style="red")
                 continue
 
             function_to_call = available_functions[function_name]
             function_args = json.loads(tool_call.function.arguments)
 
-            logging.info(
-                "Calling function: %s args: %s",
-                function_name,
-                function_args,
-                extra={"style": "purple"},
-            )
-            function_response = await function_to_call(**function_args)
-            logging.info(
-                "Function %s returned: %s\n",
-                function_name,
-                function_response,
-                extra={"style": "orange"},
-            )
+            # Append a system message indicating a tool call
+            messages.append({
+                "role": "system",
+                "content": f"This is a tool call for the {function_name} function."
+            })
 
+            # Call the function and get the response
+            function_response = await function_to_call(**function_args)
+
+            # Handle non-string responses
             if function_response is None:
                 function_response = "No response received from the function."
             elif not isinstance(function_response, str):
                 function_response = json.dumps(function_response)
 
+            # Append the tool response to messages and memory
             function_response_message = {
                 "role": "tool",
                 "name": function_name,
                 "content": function_response,
                 "tool_call_id": tool_call.id,
             }
-
             messages.append(function_response_message)
+            memory.append({"role": "assistant", "content": function_response})
             executed_tool_call_ids.append(tool_call.id)
 
-        # Ensure the next message prompts the assistant to use tool responses
-        messages.append(
-            {
-                "role": "user",
-                "content": f"With the data returned from the tool calls, generate any subsequently required requests and tool calls to process and understand the responses from the tool calls until you have verified you have the correct response to answer the original users request that was: {original_user_input}. And then follow up with any additional requests or tool calls to complete task required to fulfill the original request.",
-            }
-        )
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"use the responses from the tool calls to generate and send any subsequently required requests and or tool calls you will need to process and understand the responses from all the tool calls until you have verified you have the all the information and data processed to correctly respond to the original request which was: {original_user_input}. Then continue following the next steps in the plan with any additional requests or tool calls to complete the tasks required to fulfill the original request.",
+                },
+            )
 
-        # Create next completion ensuring to pass the updated messages array
         second_response = await base_client.chat.completions.create(
             model=openai_defaults["model"],
-            messages=messages,
+            messages=messages + memory[-mem_size:],
             tools=tools,
             tool_choice="auto",
             temperature=openai_defaults["temperature"],
@@ -347,8 +317,10 @@ async def run_conversation(
             frequency_penalty=openai_defaults["frequency_penalty"],
             presence_penalty=openai_defaults["presence_penalty"],
         )
+
         return second_response, memory
     else:
+        # If there are no tool calls, return the original response and memory
         return response, memory
 
 
@@ -356,6 +328,27 @@ async def main():
     """
     Main function.
     """
+    # Configure logging based on the settings from .env
+    if LOGGING_ENABLED:
+        # Set the logging level based on the LOGGING_LEVEL string
+        level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
+        # Configure logging with or without a log file
+        if LOGGING_FILE:
+            logging.basicConfig(
+                level=level,
+                format=LOGGING_FORMAT,
+                filename=LOGGING_FILE
+            )
+        else:
+            logging.basicConfig(level=level, format=LOGGING_FORMAT)
+
+        # Set a higher logging level for a package to prevent DEBUG logs
+        logging.getLogger('markdown_it').setLevel(logging.ERROR)
+        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+        logging.getLogger('httpcore').setLevel(logging.ERROR)
+    else:
+        logging.disable(logging.CRITICAL)
+
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
@@ -364,15 +357,9 @@ async def main():
     parser.add_argument(
         "--talk", action="store_true", help="Use TTS for the final response"
     )
-    parser.add_argument(
-        "--intro", action="store_true", help="Play an intro video at startup"
-    )
     args = parser.parse_args()
 
     use_tts = args.talk
-
-    if args.intro:
-        play_video("intro_video.mp4")
 
     console.print(Markdown("# 👋  GPT_ALL 👋"), style="bold blue")
 
@@ -420,20 +407,24 @@ async def main():
     ]
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
-    available_functions, tools = await enable_plugins(available_functions, tools)
+    available_functions, tools, enabled_plugins_log_paths = await enable_plugins(available_functions, tools)
 
     # Initialize the conversation memory
     memory = []
-
+    logging.info(
+        "Memory from line 414: %s",
+        json.dumps(memory),
+        extra={"style": "purple"},
+    )
     # Main Loop
     while True:
         # Ask the user for input
         user_input = Prompt.ask(
-            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]exit or quit[/bold yellow])",
+            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
 
         # Check if the user wants to exit the program
-        if user_input.lower() == "exit":
+        if user_input.lower() == "quit":
             console.print("\nExiting the program.", style="bold red")
             break
 
@@ -442,18 +433,32 @@ async def main():
             display_help(tools)
             continue
 
+        # Check if the user wants to clear the log files
+        elif user_input.lower() == "/clearlog":
+            # Assume 'enabled_plugins' is a list of enabled plugin names
+            clear_logs_response = await clear_log_files(enabled_plugins)
+            console.print("\n" + clear_logs_response, style="green")
+            continue
+
         # Prepare the conversation messages
         messages = [
             {
                 "role": "system",
-                "content": MAIN_SYSTEM_PROMPT,
+                "content": f"Functions and tools available to you: {available_functions}, {tools}, {MAIN_SYSTEM_PROMPT}",
             },
-            {"role": "user", "content": f"{user_input}"},
+            {
+                "role": "user",
+                "content": f"{user_input}",
+            },
         ]
+        logging.info(
+            "Messages from line 455: %s",
+            json.dumps(messages),
+            extra={"style": "purple"},
+        )
 
-        # Start the spinner
         with live_spinner:
-            # Start the spinner
+
             live_spinner.start()
 
             # Pass the user input and memory to the run_conversation function
@@ -463,10 +468,13 @@ async def main():
                 available_functions=available_functions,
                 original_user_input=user_input,
                 mem_size=10,
-                memory=memory,  # Pass the memory variable
+                memory=memory,
             )
-
-            # Stop the spinner
+            logging.info(
+                "Final response from line 473: %s",
+                final_response,
+                extra={"style": "purple"},
+            )
             live_spinner.stop()
 
         # Print the final response from the model or use TTS
@@ -484,13 +492,13 @@ async def main():
             console.print("\nI'm not sure how to help with that.", style="red")
 
         # Remove tools from the tools list after processing
-        tools[:] = [
-            tool
-            for tool in tools
-            if tool.get("function", {}).get("name", "").lower()
-            not in user_input.lower()
-        ]
+        tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
+        logging.info(
+            "Tools from line 497: %s",
+            json.dumps(tools),
+            extra={"style": "purple"},
+        )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.get_event_loop().run_until_complete(main())
