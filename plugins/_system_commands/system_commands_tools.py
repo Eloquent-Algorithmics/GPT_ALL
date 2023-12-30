@@ -199,14 +199,14 @@ system_commands_tool_list = [
         "type": "function",
         "function": {
             "name": "get_system_information",
-            "description": "Get information about the system.",
+            "description": "This function allows you to gather information about the local machine.",
         },
     },
     {
         "type": "function",
         "function": {
             "name": "run_system_command",
-            "description": "Run a system command.",
+            "description": "This function allows you to run a system command.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -223,7 +223,7 @@ system_commands_tool_list = [
         "type": "function",
         "function": {
             "name": "read_python_script",
-            "description": "Read a Python script.",
+            "description": "This function allows you to read a Python script.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -240,7 +240,7 @@ system_commands_tool_list = [
         "type": "function",
         "function": {
             "name": "write_python_script",
-            "description": "Write a Python script.",
+            "description": "This function allows you to write a Python script.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -261,7 +261,7 @@ system_commands_tool_list = [
         "type": "function",
         "function": {
             "name": "amend_python_script",
-            "description": "Amend a Python script.",
+            "description": "This function allows you to amend a Python script.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -282,7 +282,7 @@ system_commands_tool_list = [
         "type": "function",
         "function": {
             "name": "execute_python_script",
-            "description": "Execute a Python script.",
+            "description": "This function allows you to execute a Python script.",
             "parameters": {
                 "type": "object",
                 "properties": {

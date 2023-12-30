@@ -11,7 +11,7 @@ This module defines the NHTSA vPIC VIN tools.
 import requests
 
 
-async def get_vehicle_details(vin):
+async def get_vehicle_details_by_vin(vin):
     """Retrieve vehicle details by VIN."""
     endpoint = f"https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/{vin}?format=json"
     response = requests.get(endpoint, timeout=5)
@@ -23,8 +23,8 @@ nhtsa_vpic_tool_list = [
     {
         "type": "function",
         "function": {
-            "name": "get_vehicle_details",
-            "description": "Retrieve details of a vehicle by VIN.",
+            "name": "get_vehicle_details_by_vin",
+            "description": "This function allows you to retrieve details of a vehicle by VIN from the NHTSA vPic API.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -41,5 +41,5 @@ nhtsa_vpic_tool_list = [
 
 
 available_functions = {
-    "get_vehicle_details": get_vehicle_details,
+    "get_vehicle_details_by_vin": get_vehicle_details_by_vin,
 }

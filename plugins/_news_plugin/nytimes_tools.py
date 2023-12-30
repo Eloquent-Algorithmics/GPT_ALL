@@ -25,11 +25,16 @@ TOOL_API_KEY = os.getenv("NYT_API_KEY")
 
 async def get_news_from_nytimes(query: str, api_key=TOOL_API_KEY, url=TOOL_URL) -> List:
     """
-    This function fetches news from New York Times based on a query.
-    :param query: The search query for the New York Times API
-    :param api_key: The API key for the New York Times API
-    :param url: The URL for the New York Times API
-    :return: A list of news articles
+    Asynchronously fetches news articles from the New York Times API based on a search query.
+
+    Args:
+    - api_key (str): The API key used for authenticating with the New York Times API.
+    - query (str): The search query string to find articles related to.
+    - url (str): The base URL of the New York Times API.
+
+    Returns:
+    - List[Dict[str, str]]: A list of dictionaries, where each dictionary 
+    - contains information about a news article, including 'title', 'description', 'snippet', and 'link'.
     """
     # Define the parameters for the request
     params = {

@@ -18,9 +18,17 @@ TOOL_API_KEY = os.getenv("GOOGLE_API_KEY")
 CSE_ID = os.getenv("GOOGLE_CSE_ID")
 
 
-async def search_google(query: str) -> List:
+async def search_google(query: str, num: Optional[int] = 10, start: Optional[int] = 1, fileType: Optional[str] = None, lr: Optional[str] = None, safe: Optional[str] = "off") -> List:
     """
     Search Google and return results.
+    
+    :param query: The search query string.
+    :param num: Number of search results to return.
+    :param start: The first result to retrieve (starts at 1).
+    :param fileType: Filter results to a specific file type (e.g., pdf, png, etc.).
+    :param lr: Restricts the search to documents written in a particular language (e.g., lang_en).
+    :param safe: Search safety level (e.g., off, medium, high).
+    :return: A list of search results.
     """
 
     url = "https://www.googleapis.com/customsearch/v1"
@@ -28,7 +36,16 @@ async def search_google(query: str) -> List:
         "key": TOOL_API_KEY,
         "cx": CSE_ID,
         "q": query,
+        "num": num,
+        "start": start,
+        "safe": safe,
     }
+
+    # Add optional parameters if they are provided
+    if fileType:
+        params["fileType"] = fileType
+    if lr:
+        params["lr"] = lr
 
     # Debug print
     logging.info(
@@ -91,7 +108,27 @@ search_google_tools = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "query perform the search on.",
+                        "description": "Query to perform the search on.",
+                    },
+                    "num": {
+                        "type": "integer",
+                        "description": "Number of search results to return.",
+                    },
+                    "start": {
+                        "type": "integer",
+                        "description": "The first result to retrieve (starts at 1).",
+                    },
+                    "fileType": {
+                        "type": "string",
+                        "description": "Filter results to a specific file type.",
+                    },
+                    "lr": {
+                        "type": "string",
+                        "description": "Restricts the search to documents written in a particular language.",
+                    },
+                    "safe": {
+                        "type": "string",
+                        "description": "Search safety level.",
                     },
                 },
                 "required": ["query"],

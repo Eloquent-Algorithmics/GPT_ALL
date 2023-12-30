@@ -24,7 +24,7 @@ logging.basicConfig(
 )
 
 
-async def read_email(gmail_service):
+async def gmail_read_message(gmail_service):
     """Retrieve a list of emails from Gmail."""
     try:
         results = gmail_service.users().messages().list(
@@ -38,11 +38,11 @@ async def read_email(gmail_service):
 
             sender, subject, body = await extract_email_data(msg)
 
-            snippet = body[:200] if body else 'N/A'
+            snippet = body[:300] if body else 'N/A'
             emails.append(
                 {
-                    'id': message['id'], 'subject': subject,
-                    'from': sender, 'snippet': snippet
+                    'id': message['id'], 'from': sender,
+                    'subject': subject, 'snippet': snippet
                 }
             )
         logging.info("Emails from line 48: %s", emails)
@@ -53,7 +53,7 @@ async def read_email(gmail_service):
         return []
 
 
-async def send_email(gmail_service, **kwargs):
+async def gmail_send_message(gmail_service, **kwargs):
     """Send an email message."""
     subject = kwargs.get('subject')
     body = kwargs.get('body')
@@ -83,7 +83,7 @@ async def send_email(gmail_service, **kwargs):
         return f"An error occurred while sending the email: {error}"
 
 
-async def delete_email(gmail_service, message_id):
+async def gmail_delete_message(gmail_service, message_id):
     """Delete an email message by ID."""
     try:
         gmail_service.users().messages().delete(userId='me', id=message_id).execute()
@@ -148,14 +148,155 @@ email_tools_list = [
     {
         "type": "function",
         "function": {
-            "name": "read_email",
-            "description": "Retrieve a list of emails from Gmail.",
+            "name": "gmail_read_message",
+            "description": "Searches and retrieves emails from the users Gmail.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "user_object_id": {
+                    # Search for messages matching an object ID: `object_id:`
+                    "object_id": {
                         "type": "string",
-                        "description": "Optional object ID to filter emails.",
+                        "description": "Searches for messages by object ID to filter returned emails.",
+                    },
+                    # Search for messages matching a query: `query:`
+                    "query": {
+                        "type": "string",
+                        "description": "Search query to filter emails by: `query:`",
+                    },
+                    # Specify words in the subject line to search for:`subject:`
+                    "subject": {
+                        "type": "string",
+                        "description": "Words in the subject line to filter by: `subject:`",
+                    },
+                    # Specify a recipient to search for: `to:`
+                    "to": {
+                        "type": "string",
+                        "description": "Specify a recipient to filter by: `to:`",
+                    },
+                    # Specify the sender to search for: `from:`
+                    "from": {
+                        "type": "string",
+                        "description": "Specify the sender to filter by: `from:`",
+                    },
+                    # Specify a recipient to filter: `cc:`
+                    "cc": {
+                        "type": "string",
+                        "description": "Recipient to filter by `cc:`",
+                    },
+                    # Specify a recipient who received a copy: `bcc:`
+                    "bcc": {
+                        "type": "string",
+                        "description": "Filter by recipient who received a copy to filter by `bcc:`",
+                    },
+                    # Search for messages that match multiple terms: `OR` or `{ }`
+                    "OR": {
+                        "type": "string",
+                        "description": "Find messages that match multiple terms `OR` or `{ }`, Example: from:amy OR from:david, Example: {from:amy from:david}",
+                    },
+                    # Remove messages from the results `-`
+                    "-": {
+                        "type": "string",
+                        "description": "Remove messages from your results `-`, Example: dinner -movie",
+                    },
+                    # Search messages with words near each other. Use the number to say how many words apart the words can be `AROUND`
+                    "AROUND": {
+                        "type": "string",
+                        "description": "Find messages with words near each other. Use the number to say how many words apart the words can be, Example: holiday AROUND 10 vacation",
+                    },
+                    # Search for messages that have a certain label `label:`
+                    "label": {
+                        "type": "string",
+                        "description": "Find messages that have a certain label, Example: label:friends",
+                    },
+                    # Search for messages that have a Google Drive, Docs, Sheets, Slides, Youtube Video, attachment, link, an icon of a certain color, or that have or don't have a label:
+                    "has": {
+                        "type": "string",
+                        "description": "Search for messages that have an attachment `has:`, Example: has:attachment, has:drive, has:document, has:spreadsheet, has:presentation, has:youtube, has:yellow-star, has:blue-start, has:userlabels, has:nouserlabels",
+                    },
+                    # Search for messages that have attachments of a certain type `filename:`
+                    "filename": {
+                        "type": "string",
+                        "description": "Messages that have attachments of a certain type `filename:`, Example: filename:pdf, filename:homework.txt",
+                    },
+                    # Search by email for delivered messages: `deliveredto:`
+                    "deliveredto": {
+                        "type": "string",
+                        "description": "Search by email for delivered messages `deliveredto:`, Example: deliveredto:",
+                    },
+                    # Search for messages in a certain category: `category:`
+                    "category": {
+                        "type": "string",
+                        "description": "Search for messages in a certain category `category:`, Example: category:primary, category:social, category:promotions, category:updates, category:forums, category:reservations, category:purchases",
+                    },
+                    # Search for messages larger than a certain size in bytes `size:` `larger:` `smaller:`
+                    "size": {
+                        "type": "string",
+                        "description": "Messages larger than a certain size in bytes `size:` `larger:` `smaller:`, Example: size:1000000, larger:10M",
+                    },
+                    # Search for results that match a word exactly `+`
+                    "+": {
+                        "type": "string",
+                        "description": "Search for results that match a word exactly `+`, Example: +unicorn",
+                    },
+                    # Search for messages with a certain message-id header `rfc822msgid:`
+                    "rfc822msgid": {
+                        "type": "string",
+                        "description": "Search for messages with a certain message-id header `rfc822msgid:`, Example: rfc822msgid:200503292@example.com",
+                    },
+                    # Search for messages from a mailing list `list:`
+                    "list": {
+                        "type": "string",
+                        "description": "Optional Messages from a mailing list `list:`, Example: list:info@example.com",
+                    },
+                    # Search for an exact word or phrase `""`
+                    "": {
+                        "type": "string",
+                        "description": "Search for an exact word or phrase `""`, Example: \"dinner and movie tonight\"",
+                    },
+                    # Group multiple search terms together `( )`
+                    "()": {
+                        "type": "string",
+                        "description": "Group multiple search terms together `( )`, Example: subject:(dinner movie)",
+                    },
+                    # Messages in any folder, including Spam and Trash `in:anywhere`
+                    "in": {
+                        "type": "string",
+                        "description": "Messages in any folder, including Spam and Trash `in:anywhere`, Example: in:anywhere movie",
+                    },
+                    # Search for messages that are marked: `is:important` `is:starred`
+                    "is": {
+                        "type": "string",
+                        "description": "Search for messages that are marked: `is:important` `is:starred`, Example: is:important",
+                    },
+                    # Search for messages sent during a certain time period `after:`
+                    "after": {
+                        "type": "string",
+                        "description": "Search for messages sent during a certain time period `after:`, `before:`, `older:`, `newer:`. Example: after:2004/04/16",
+                    },
+                    # Search for messages older or newer than a time period using d (day), m (month), and y (year)
+                    "older_than": {
+                        "type": "string",
+                        "description": "Search for messages older or newer than a time period using d (day), m (month), and y (year), Example: newer_than:2d",
+                    },
+                    # Search for messages older or newer than a time period using d (day), m (month), and y (year)
+                    "newer_than": {
+                        "type": "string",
+                        "description": "Search for messages older or newer than a time period using d (day), m (month), and y (year), Example: newer_than:2d",
+                    },
+                    # The sort order applied to the results of the search `order_by:`
+                    "order_by": {
+                        "type": "string",
+                        "description": "Optional order by field.",
+                    },
+                    # The sort direction applied to the results of the search `order_direction:`
+                    "order_direction": {
+                        "type": "string",
+                        "description": "Optional order direction.",
+                    },
+                    # The number of results to return `limit:`
+                    "fields": {
+                        "type": "string",
+                        "description": "Optional fields to return.",
                     },
                 },
                 "required": [],
@@ -165,11 +306,19 @@ email_tools_list = [
     {
         "type": "function",
         "function": {
-            "name": "send_email",
+            "name": "gmail_send_message",
             "description": "Send an email message.",
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "from": {
+                        "type": "string",
+                        "description": "The sender of the email.",
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "The recipient of the email.",
+                    },
                     "subject": {
                         "type": "string",
                         "description": "The subject of the email.",
@@ -177,10 +326,6 @@ email_tools_list = [
                     "body": {
                         "type": "string",
                         "description": "The body of the email.",
-                    },
-                    "to": {
-                        "type": "string",
-                        "description": "The recipient of the email.",
                     },
                 },
                 "required": ["subject", "body"],
@@ -190,7 +335,7 @@ email_tools_list = [
     {
         "type": "function",
         "function": {
-            "name": "delete_email",
+            "name": "gmail_delete_message",
             "description": "Delete an email message by ID.",
             "parameters": {
                 "type": "object",
@@ -207,7 +352,7 @@ email_tools_list = [
 ]
 
 available_functions = {
-    "read_email": read_email,
-    "send_email": send_email,
-    "delete_email": delete_email,
+    "gmail_read_message": gmail_read_message,
+    "gmail_send_message": gmail_send_message,
+    "gmail_delete_message": gmail_delete_message,
 }
