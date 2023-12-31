@@ -6,6 +6,9 @@
 
 """
 This is the Gemini Pro Expert plugin.
+
+This plugin is a wrapper around the Gemini Pro API.
+
 """
 
 import os
@@ -28,6 +31,7 @@ class GeminiProPlugin(PluginBase):
     This is the Gemini Pro Expert plugin.
 
     This plugin is a wrapper around the Gemini Pro API.
+
     """
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
@@ -65,6 +69,10 @@ class GeminiProPlugin(PluginBase):
     def default_generation_config(self):
         """
         Returns the default generation config for the Gemini Pro API.
+
+        This is the same as the default generation config for the
+        Gemini Pro API, except that the max_output_tokens is set to 512
+        instead of 256.
         """
         return {
             "temperature": 1,
@@ -76,6 +84,11 @@ class GeminiProPlugin(PluginBase):
     def default_safety_settings(self):
         """
         Returns the default safety settings for the Gemini Pro API.
+
+        This is the same as the default safety settings for the
+        Gemini Pro API, except that the threshold for all categories
+        is set to BLOCK_MEDIUM_AND_ABOVE instead of BLOCK_HIGH_AND_ABOVE.
+
         """
         return [
             {

@@ -6,6 +6,9 @@
 
 """
 This is the Accuweather plugin Base class.
+
+It defines the Accuweather plugin and loads the tools and functions from the
+accompanying scripts.
 """
 
 import os
@@ -20,6 +23,9 @@ from plugins._accuweather_plugin.accuweather_tools import (
 class AccuWeatherPlugin(PluginBase):
     """
     This class defines the AccuWeather plugin.
+
+    It loads the tools and functions from the accompanying scripts.
+
     """
     def __init__(self):
         accuweather_api_key = os.getenv("ACCUWEATHER_API_KEY")
@@ -41,6 +47,7 @@ class AccuWeatherPlugin(PluginBase):
     async def load_plugin_tools(self):
         """
         Load tools and functions from accompanying scripts.
+
         """
         self.tools.extend(accu_weather_tools)
         for func_name, func in accuweather_functions.items():

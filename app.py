@@ -37,13 +37,13 @@ from config import (
     OPENAI_MAX_TOKENS,
     live_spinner,
 )
-from utils.core_tools import (
+from utils.openai_model_tools import (
     ask_chat_gpt_4_0314_synchronous,
     ask_chat_gpt_4_0314_asynchronous,
     ask_chat_gpt_4_0613_synchronous,
     ask_chat_gpt_4_0613_asynchronous,
 )
-from utils.real_core_tools import get_current_date_time, display_help
+from utils.core_tools import get_current_date_time, display_help
 from output_methods.audio_pyttsx3 import tts_output
 from plugins.plugins_enabled import enable_plugins
 
@@ -52,9 +52,10 @@ sys.path.append(str(Path(__file__).parent))
 # Define the rich console
 console = Console()
 
-# Define the OpenAI API clients
+# Define the main OpenAI client
 openai_model = OPENAI_MODEL
 
+# Define the main OpenAI client
 main_client = AsyncOpenAI(
     api_key=OPENAI_API_KEY,
     http_client=httpx.AsyncClient(
@@ -65,7 +66,7 @@ main_client = AsyncOpenAI(
     )
 )
 
-# Define the default OpenAI parameters
+# Define the parameters for the OpenAI main client.
 openai_defaults = {
     "model": OPENAI_MODEL,
     "temperature": OPENAI_TEMP,
@@ -86,6 +87,7 @@ if LOGGING_ENABLED:
             format=LOGGING_FORMAT,
             filename=LOGGING_FILE
         )
+        # Set the logging level for specific libraries
         logging.getLogger('httpcore.http11').setLevel(logging.INFO)
         logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
         logging.getLogger('httpcore').setLevel(logging.WARNING)
@@ -99,6 +101,12 @@ else:
 def join_messages(memory: list[dict]):
     """
     This function joins messages for conversation memory.
+
+    Args:
+        memory: The conversation memory.
+
+    Returns:
+        The joined messages.
     """
     text = ""
     for m in memory:
@@ -111,6 +119,14 @@ def join_messages(memory: list[dict]):
 def check_under_context_limit(text: str, limit: int, model: str):
     """
     This function checks if the context is under the token limit.
+
+    Args:
+        text: The text to check.
+        limit: The token limit.
+        model: The model to use.
+
+    Returns:
+        Whether the context is under the token limit.
     """
     enc = tiktoken.encoding_for_model(model)
     numtokens = len(enc.encode(text))
@@ -120,6 +136,18 @@ def check_under_context_limit(text: str, limit: int, model: str):
 async def follow_conversation(
     user_text: str, memory: list[dict], mem_size: int, model: str
 ):
+    """
+    This function follows the conversation.
+
+    Args:
+        user_text: The user text.
+        memory: The conversation memory.
+        mem_size: The memory size.
+        model: The model to use.
+
+    Returns:
+        The conversation memory.
+    """
     logging.info('Starting conversation with user input line 167: %s', user_text)
 
     ind = min(mem_size, len(memory))
@@ -173,6 +201,21 @@ async def run_conversation(
     mem_size,
     **kwargs,
 ):
+    """
+    This function runs the conversation.
+
+    Args:
+        messages: The messages.
+        tools: The tools.
+        available_functions: The available functions.
+        original_user_input: The original user input.
+        memory: The conversation memory.
+        mem_size: The memory size.
+        **kwargs: The keyword arguments.
+
+    Returns:
+        The final response from the model.
+    """
     logging.info('Starting conversation with user input line 237: %s', original_user_input)
 
     memory = await follow_conversation(
@@ -295,7 +338,10 @@ async def run_conversation(
 
 async def main():
     """
-    Main function.
+    This is the main function of the script.
+
+    Returns:
+        The final response from the model.
     """
     logging.info('Starting main function')
     os.system("cls" if os.name == "nt" else "clear")
@@ -340,7 +386,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314_synchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -365,7 +411,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314_asynchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -390,7 +436,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0613_synchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -415,7 +461,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0613_asynchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -499,7 +545,6 @@ async def main():
                 mem_size=200,
                 memory=memory,
             )
-            logging.info('Received final response from workflow manager')
 
             # Stop the spinner
             live_spinner.stop()
@@ -530,7 +575,7 @@ async def main():
         ]
         logging.info('Removed used tools from the tools list')
 
-
+# Run the main function
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     asyncio.run(main())

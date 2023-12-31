@@ -5,7 +5,9 @@
 # File Path: output/audio_pyttsx3.py
 
 """
-This module is responsible for handling audio output.
+This module is responsible for handling TTS audio output.
+
+It uses pyttsx3 as the TTS engine.
 
 """
 
@@ -26,6 +28,8 @@ comtypes_logger.setLevel(logging.WARNING)
 def initialize_audio():
     """
     This function initializes the audio system.
+
+    # TODO: Add support for other TTS engines.
     """
     pygame.mixer.pre_init(44100, -16, 2, 4096)
     pygame.mixer.init()
@@ -37,6 +41,8 @@ def play_audio(audio: Union[bytes, BytesIO]):
 
     Args:
         audio (bytes or BytesIO): The audio to play.
+
+    # TODO: Add support for other TTS engines.
     """
 
     if not isinstance(audio, (bytes, BytesIO)):
@@ -56,6 +62,8 @@ def tts_output(text):
 
     Args:
         text (str): The text to output.
+
+    # TODO: Add support for other TTS engines.
     """
 
     if TTS_ENGINE == "pyttsx3":
@@ -71,6 +79,8 @@ def tts_output_pyttsx3(text):
 
     Args:
         text (str): The text to output.
+    
+    # TODO: Add support for other TTS engines.
     """
 
     engine = pyttsx3.init('sapi5')

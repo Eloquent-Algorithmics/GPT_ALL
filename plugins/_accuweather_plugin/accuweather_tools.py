@@ -25,6 +25,9 @@ nlp = spacy.load("en_core_web_sm")
 def extract_location(user_input):
     """
     This function extracts the location from the user input.
+
+    It uses the spaCy library to extract the location from the user input.
+
     """
     doc = nlp(user_input)
     locations = [
@@ -36,6 +39,9 @@ def extract_location(user_input):
 async def get_location_key(api_key, base_url, location_name):
     """
     This function gets the location key for the given location name.
+
+    If no location provided or an empty string passed, defaults to Atlanta.
+
     """
     url = f"{base_url}/locations/v1/cities/search"
     params = {"apikey": api_key, "q": location_name}
@@ -54,8 +60,8 @@ async def get_current_weather(api_key, base_url, location: str = "Atlanta"):
     This function gets the current weather for the given location.
 
     If no location provided or an empty string passed, defaults to Atlanta.
-    """
 
+    """
     # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
@@ -139,12 +145,14 @@ async def get_one_hour_weather_forecast(api_key, base_url, location: str = "Atla
     # Strip any extra quotes from the location string
     location = location.strip('"')
 
+    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
+    # Get the hourly weather forecast for the given location
     url = f"{base_url}/forecasts/v1/hourly/1hour/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -152,7 +160,6 @@ async def get_one_hour_weather_forecast(api_key, base_url, location: str = "Atla
             async with session.get(url, params=params) as response:
                 response.raise_for_status()
                 data = await response.json()
-                # Assuming that the data contains a list of forecasts, and we are interested in the first one
                 forecast = data[0] if data and isinstance(data, list) else {}
                 weather_info = {
                     "DateTime": forecast.get("DateTime"),
@@ -201,8 +208,8 @@ async def get_twelve_hour_weather_forecast(api_key, base_url, location: str = "A
     This function gets the twelve hour hourly forecast weather for the given location.
 
     If no location provided or an empty string passed, defaults to Atlanta.
-    """
 
+    """
     # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
@@ -210,12 +217,14 @@ async def get_twelve_hour_weather_forecast(api_key, base_url, location: str = "A
     # Strip any extra quotes from the location string
     location = location.strip('"')
 
+    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
+    # Get 12 hours of hourly forecast weather for the given location
     url = f"{base_url}/forecasts/v1/hourly/12hour/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -224,8 +233,9 @@ async def get_twelve_hour_weather_forecast(api_key, base_url, location: str = "A
                 response.raise_for_status()
                 data = await response.json()
                 if not data or not isinstance(data, list):
-                    return json.dumps({"error": "Invalid forecast data format"})
-
+                    return json.dumps(
+                        {"error": "Invalid forecast data format"}
+                    )
                 # Process each forecast in the list
                 forecasts_info = []
                 for forecast in data:
@@ -277,8 +287,8 @@ async def get_one_day_weather_forecast(api_key, base_url, location: str = "Atlan
     This function gets the one day forecast weather for the given location.
 
     If no location provided or an empty string passed, defaults to Atlanta.
-    """
 
+    """
     # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
@@ -286,12 +296,14 @@ async def get_one_day_weather_forecast(api_key, base_url, location: str = "Atlan
     # Strip any extra quotes from the location string
     location = location.strip('"')
 
+    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
+    # Get the daily forecast weather for the given location
     url = f"{base_url}/forecasts/v1/daily/1day/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -318,8 +330,8 @@ async def get_five_day_weather_forecast(api_key, base_url, location: str = "Atla
     This function gets the five day forecast weather for the given location.
 
     If no location provided or an empty string passed, defaults to Atlanta.
-    """
 
+    """
     # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
@@ -327,12 +339,14 @@ async def get_five_day_weather_forecast(api_key, base_url, location: str = "Atla
     # Strip any extra quotes from the location string
     location = location.strip('"')
 
+    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
+    # Get 5 days of forecasts weather for the given location
     url = f"{base_url}/forecasts/v1/daily/5day/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:

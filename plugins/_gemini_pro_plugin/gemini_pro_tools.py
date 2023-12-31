@@ -38,14 +38,26 @@ safety_settings = [
 ]
 
 # Create object for the Gemini Pro model
-model = genai.GenerativeModel(model_name="gemini-pro",
-                                  generation_config=generation_config,
-                                  safety_settings=safety_settings)
+model = genai.GenerativeModel(
+    model_name="gemini-pro",
+    generation_config=generation_config,
+    safety_settings=safety_settings
+)
 
 
 def ask_gemini_pro_synchronous(plugin_instance, question):
     """
     Ask Gemini Pro a question and get a response.
+
+    This function is synchronous, meaning that it will block the
+    main thread until the response is received.
+
+    Args:
+        plugin_instance (GeminiProPlugin): The Gemini Pro plugin instance.
+        question (str): The question to ask Gemini Pro.
+
+    Returns:
+        str: The response from Gemini Pro.
     """
     # Create a conversation object
     convo = model.start_chat(history=[])
@@ -61,6 +73,10 @@ def ask_gemini_pro_synchronous(plugin_instance, question):
 async def ask_gemini_pro_asynchronous(plugin_instance, question):
     """
     Ask Gemini Pro a question and get a response.
+
+    This function is asynchronous, meaning that it will not block the
+    main thread while waiting for the response.
+
     """
     # Create a conversation object
     convo = model.start_chat(history=[])
@@ -78,7 +94,7 @@ gemini_pro_tools = [
         "type": "function",
         "function": {
             "name": "ask_gemini_pro_synchronous",
-            "description": "This function allows you to ask the Gemini Pro LLM a question synchronously and get a response synchronously.",
+            "description": "This function allows you to send a request to the Gemini Pro LLM (which can be used for natural language tasks, multi-turn text and code chat, code generation) synchronously and get a response you can you use later in your workflow.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -95,7 +111,7 @@ gemini_pro_tools = [
         "type": "function",
         "function": {
             "name": "ask_gemini_pro_asynchronous",
-            "description": "This function allows you to ask the Gemini Pro LLM a question asynchronously and get a response asynchronously.",
+            "description": "This function allows you to send a request to the Gemini Pro LLM (which can be used for natural language tasks, multi-turn text and code chat, code generation) asynchronously and get a response you can you use later in your workflow.",
             "parameters": {
                 "type": "object",
                 "properties": {
