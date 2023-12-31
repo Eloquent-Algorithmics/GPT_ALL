@@ -83,9 +83,6 @@ or
 
 python -m app --talk  # To use TTS.
 
-or
-
-python -m app --intro  # Use to play video at launch.
 ```
 
 # ⚠️ Disclamer ⚠️
