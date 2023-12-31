@@ -1,3 +1,4 @@
+
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: app.py
@@ -7,37 +8,44 @@
 This is the main part of the script
 """
 
+import argparse
+import asyncio
+import inspect
+import json
+import logging
 import os
 import sys
-import logging
-from datetime import datetime
 from pathlib import Path
-import json
-import asyncio
-import argparse
-import threading
-from moviepy.editor import VideoFileClip
-from openai import AsyncOpenAI
-import pytz
-import tzlocal
+
+import httpx
 import tiktoken
+from openai import AsyncOpenAI
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Prompt
-from output_methods.audio_pyttsx3 import tts_output
-from plugins.plugins_enabled import enable_plugins
+
 from config import (
+    LOGGING_ENABLED,
+    LOGGING_FILE,
+    LOGGING_FORMAT,
+    LOGGING_LEVEL,
+    MAIN_SYSTEM_PROMPT,
     OPENAI_API_KEY,
     OPENAI_MODEL,
     OPENAI_TEMP,
     OPENAI_TOP_P,
-    MAIN_SYSTEM_PROMPT,
-    LOGGING_ENABLED,
-    LOGGING_LEVEL,
-    LOGGING_FILE,
-    LOGGING_FORMAT,
+    OPENAI_MAX_TOKENS,
     live_spinner,
 )
+from utils.core_tools import (
+    ask_chat_gpt_4_0314_synchronous,
+    ask_chat_gpt_4_0314_asynchronous,
+    ask_chat_gpt_4_0613_synchronous,
+    ask_chat_gpt_4_0613_asynchronous,
+)
+from utils.real_core_tools import get_current_date_time, display_help
+from output_methods.audio_pyttsx3 import tts_output
+from plugins.plugins_enabled import enable_plugins
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -46,15 +54,23 @@ console = Console()
 
 # Define the OpenAI API clients
 openai_model = OPENAI_MODEL
-base_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-gpt4_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+main_client = AsyncOpenAI(
+    api_key=OPENAI_API_KEY,
+    http_client=httpx.AsyncClient(
+        limits=httpx.Limits(
+            max_connections=1000,
+            max_keepalive_connections=100,
+        )
+    )
+)
 
 # Define the default OpenAI parameters
 openai_defaults = {
     "model": OPENAI_MODEL,
     "temperature": OPENAI_TEMP,
     "top_p": OPENAI_TOP_P,
-    "max_tokens": 1500,
+    "max_tokens": OPENAI_MAX_TOKENS,
     "frequency_penalty": 0,
     "presence_penalty": 0,
 }
@@ -78,66 +94,6 @@ if LOGGING_ENABLED:
         logging.basicConfig(level=level, format=LOGGING_FORMAT)
 else:
     logging.disable(logging.CRITICAL)
-
-
-async def get_current_date_time() -> str:
-    """
-    Get the current UTC date and time.
-
-    Returns:
-        str: The current UTC date and time.
-    """
-    local_timezone = tzlocal.get_localzone()
-    now = datetime.now(local_timezone)
-    now_est = now.astimezone(pytz.timezone("US/Eastern"))
-    return now_est.strftime(
-        "The current date and time is %B %d, %Y, %I:%M %p EST."
-    )
-
-
-async def ask_chat_gpt_4_0314(**kwargs) -> str:
-    """
-    Ask ChatGPT a question and return the response.
-
-    Args:
-        kwargs (dict): The keyword arguments to pass to the function.
-    Returns:
-        str: The response from ChatGPT.
-    """
-
-    question = kwargs.get("question", "")
-    text = kwargs.get("text", "")
-
-    messages = [
-        {
-            "role": "system",
-            "content": "You are an AI Assistant...",
-        },
-        {"role": "user", "content": question},
-        {"role": "assistant", "content": text},
-    ]
-
-    with live_spinner:
-        response = await gpt4_client.chat.completions.create(
-            model="gpt-4-0314",
-            messages=messages,
-            temperature=0,
-            max_tokens=1500,
-            top_p=0.3,
-            frequency_penalty=0,
-            presence_penalty=0,
-        )
-
-    # Check if the response has the expected structure and content
-    if (
-        response.choices
-        and response.choices[0].message
-        and response.choices[0].message.content
-    ):
-        return response.choices[0].message.content
-    else:
-        # Handle the case where the expected content is not available
-        return "An error occurred or no content was returned."
 
 
 def join_messages(memory: list[dict]):
@@ -181,7 +137,7 @@ async def follow_conversation(
         memory.pop(0)  # Removes the oldest messages if the limit is exceeded
         logging.debug('Removed oldest message due to context limit')
 
-    response = await base_client.chat.completions.create(
+    response = await main_client.chat.completions.create(
         model=model, messages=memory[-ind:]
     )
     logging.info('Received response from chat completion')
@@ -208,23 +164,6 @@ async def follow_conversation(
     return memory
 
 
-def display_help(tools):
-    """
-    Display the available tools.
-    """
-    console.print("\n[bold]Available Tools:[/bold]\n", style="bold blue")
-    for tool in tools:
-        if isinstance(tool, dict) and "function" in tool:
-            function_info = tool["function"]
-            name = function_info.get("name", "Unnamed")
-            description = function_info.get(
-                "description", "No description available."
-            )
-            console.print(f"[bold]{name}[/bold]: {description}")
-        else:
-            console.print(f"Invalid tool format: {tool}")
-
-
 async def run_conversation(
     messages,
     tools,
@@ -248,7 +187,7 @@ async def run_conversation(
         memory.pop(0)
         logging.debug('Removed oldest message due to context limit')
 
-    response = await base_client.chat.completions.create(
+    response = await main_client.chat.completions.create(
         model=openai_defaults["model"],
         messages=memory[-mem_size:],
         tools=tools,
@@ -295,7 +234,11 @@ async def run_conversation(
                 function_name,
                 function_args,
             )
-            function_response = await function_to_call(**function_args)
+            # Inside your run_conversation function
+            if inspect.iscoroutinefunction(function_to_call):
+                function_response = await function_to_call(**function_args)
+            else:
+                function_response = function_to_call(**function_args)
             logging.info(
                 "Function %s returned: %s",
                 function_name,
@@ -321,12 +264,19 @@ async def run_conversation(
         messages.append(
             {
                 "role": "user",
-                "content": f"With the data returned from the tool calls, generate any subsequently required requests and tool calls to process and understand the responses from the tool calls until you have verified you have the correct response to answer the original users request that was: {original_user_input}. And then follow up with any additional requests or tool calls to complete task required to fulfill the original request.",
+                "content": (
+                    f"Using any data received from the tool calls, dynamically structure the workflow to "
+                    f"process and integrate the information. Continue to perform necessary operations, "
+                    f"including additional requests and tool calls, to ensure the accuracy and completeness "
+                    f"of the response. Your goal is to provide a well-reasoned and verified answer to the "
+                    f"original user request, which was: '{original_user_input}'. Adapt the workflow as needed "
+                    f"to address all aspects of the user's request and deliver a comprehensive solution."
+                ),
             }
         )
 
         # Create next completion ensuring to pass the updated messages array
-        second_response = await base_client.chat.completions.create(
+        second_response = await main_client.chat.completions.create(
             model=openai_defaults["model"],
             messages=messages,
             tools=tools,
@@ -364,16 +314,15 @@ async def main():
     use_tts = args.talk
     logging.info('Use TTS: %s', use_tts)
 
-    if args.intro:
-        logging.info('Playing intro video')
-        play_video("intro_video.mp4")
-
     console.print(Markdown("# 👋  GPT_ALL 👋"), style="bold blue")
 
     # Initialize available base functions and tools
     available_functions = {
         "get_current_date_time": get_current_date_time,
-        "ask_chat_gpt_4_0314": ask_chat_gpt_4_0314,
+        "ask_chat_gpt_4_0314_synchronous": ask_chat_gpt_4_0314_synchronous,
+        "ask_chat_gpt_4_0314_asynchronous": ask_chat_gpt_4_0314_asynchronous,
+        "ask_chat_gpt_4_0613_synchronous": ask_chat_gpt_4_0613_synchronous,
+        "ask_chat_gpt_4_0613_asynchronous": ask_chat_gpt_4_0613_asynchronous,
         # Add more core functions here
     }
     logging.info('Initialized available functions')
@@ -384,14 +333,14 @@ async def main():
             "type": "function",
             "function": {
                 "name": "get_current_date_time",
-                "description": "Get the current date and time.",
+                "description": "Get the current date and time from the local machine.",
             },
         },
         {
             "type": "function",
             "function": {
-                "name": "ask_chat_gpt_4_0314",
-                "description": "Ask an older AI LLM that is able to understand more complex concepts and perform complex tasks.",
+                "name": "ask_chat_gpt_4_0314_synchronous",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -401,7 +350,82 @@ async def main():
                         },
                         "question": {
                             "type": "string",
-                            "description": "What's requested to be done with the text.",
+                            "description": "What are you, the ai assistant, requesting to be done with the text you are providing?",
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to be analyzed",
+                        },
+                    },
+                    "required": ["question", "text"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ask_chat_gpt_4_0314_asynchronous",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "temperature": {
+                            "type": "integer",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
+                        },
+                        "question": {
+                            "type": "string",
+                            "description": "What are you, the ai assistant, requesting to be done with the text you are providing?",
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to be analyzed",
+                        },
+                    },
+                    "required": ["question", "text"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ask_chat_gpt_4_0613_synchronous",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "temperature": {
+                            "type": "integer",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
+                        },
+                        "question": {
+                            "type": "string",
+                            "description": "What are you, the ai assistant, requesting to be done with the text you are providing?",
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to be analyzed",
+                        },
+                    },
+                    "required": ["question", "text"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ask_chat_gpt_4_0613_asynchronous",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for help. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "temperature": {
+                            "type": "integer",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
+                        },
+                        "question": {
+                            "type": "string",
+                            "description": "What are you, the ai assistant, requesting to be done with the text you are providing?",
                         },
                         "text": {
                             "type": "string",
@@ -416,7 +440,10 @@ async def main():
     logging.info('Defined available core tools')
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
-    available_functions, tools = await enable_plugins(available_functions, tools)
+    available_functions, tools = await enable_plugins(
+        available_functions,
+        tools
+    )
     logging.info('Enabled plugins')
 
     # Initialize the conversation memory
@@ -427,14 +454,14 @@ async def main():
     while True:
         # Ask the user for input
         user_input = Prompt.ask(
-            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]exit or quit[/bold yellow])",
+            "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
         logging.info('Received user input: %s', user_input)
 
         # Check if the user wants to exit the program
-        if user_input.lower() == "exit":
-            logging.info('User requested to exit the program')
-            console.print("\nExiting the program.", style="bold red")
+        if user_input.lower() == "quit":
+            logging.info('User requested to quit the program')
+            console.print("\nQuitting the program.", style="bold red")
             break
 
         # Check if the user wants to see the available tools
@@ -447,7 +474,11 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": MAIN_SYSTEM_PROMPT,
+                "content": "You are an AI Assistant integrated within a Python-based application designed to assist users by leveraging a suite of tools and functions, both synchronous and asynchronous, to process user requests and manage dynamic workflows. Your capabilities include interacting with a larger AI language model (LLM) for synchronous and asynchronous assistance, accessing the current date and time, and utilizing enabled plugins for additional functionalities. You are expected to maintain a conversation memory, ensuring the context remains within the token limit for efficient processing. When responding to user requests, consider the available tools and their descriptions, dynamically structuring workflows to include multiple turns where necessary. Prioritize reasoning and delivering the best possible response based on the users original request, taking into account the data gathered and actions completed during the interaction. Ensure that your responses are clear, concise, and directly address the users needs, while also being prepared to handle errors or unexpected situations gracefully.",
+            },
+            {
+                "role": "assistant",
+                "content": "Understood. As we continue, feel free to direct any requests or tasks you'd like assistance with. Whether it's querying information, managing schedules, processing data, or utilizing any of the tools and functionalities I have available, I'm here to help. Just let me know what you need, and I'll do my best to assist you effectively and efficiently.",
             },
             {"role": "user", "content": f"{user_input}"},
         ]
@@ -465,10 +496,10 @@ async def main():
                 tools=tools,
                 available_functions=available_functions,
                 original_user_input=user_input,
-                mem_size=10,
-                memory=memory,  # Pass the memory variable
+                mem_size=200,
+                memory=memory,
             )
-            logging.info('Received final response from run_conversation')
+            logging.info('Received final response from workflow manager')
 
             # Stop the spinner
             live_spinner.stop()

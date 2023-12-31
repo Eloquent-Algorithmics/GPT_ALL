@@ -22,19 +22,27 @@ LOGGING_FORMAT = os.getenv(
     'LOGGING_FORMAT', '%(name)s - %(levelname)s - %(message)s'
 )
 
-# Add your API keys and variables here
+
+MAIN_SYSTEM_PROMPT = os.getenv("MAIN_SYSTEM_PROMPT")
+
+# OpenAI main API keys and variables here
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if OPENAI_API_KEY is None:
     raise ValueError("OPENAI_API_KEY not set")
+
+OPENAI_ORG_ID = os.getenv("OPENAI_ORG_ID")
+if OPENAI_ORG_ID is None:
+    raise ValueError("OPENAI_ORG_ID not set")
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL")
 if OPENAI_MODEL is None:
     raise ValueError("OPENAI_MODEL not set")
 
-# Convert temperature and top_p to float
 OPENAI_TEMP = float(os.getenv("OPENAI_TEMP", str(0.5)))
 
 OPENAI_TOP_P = float(os.getenv("OPENAI_TOP_P", str(0.5)))
+
+OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", str(1500)))
 
 MAIN_SYSTEM_PROMPT = os.getenv("MAIN_SYSTEM_PROMPT")
 
