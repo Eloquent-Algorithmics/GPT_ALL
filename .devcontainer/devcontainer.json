@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/miniconda
 {
-    "name": "(eAI_v_0.0.1)",
+    "name": "(GPT_ALL)",
     "build": {
         "context": "..",
         "dockerfile": "Dockerfile"
