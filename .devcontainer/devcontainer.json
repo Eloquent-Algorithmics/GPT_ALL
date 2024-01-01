@@ -10,6 +10,7 @@
         "vscode": {
             "extensions": [
                 "ms-python.python",
+                "ms-python.vscode-pylance",
                 "ms-python.autopep8",
                 "ms-python.black-formatter",
                 "ms-python.flake8",
@@ -31,7 +32,13 @@
 				"GitHub.vscode-pull-request-github",
 				"GitHub.remotehub",
 				"GitHub.github-vscode-theme",
-				"ms-vscode.live-server"
+				"ms-vscode.live-server",
+                "dbaeumer.vscode-eslint",
+                "ms-vscode-remote.remote-containers",
+                "GitHub.vscode-pull-request-github",
+                "GitHub.remotehub",
+                "charliermarsh.ruff",
+                "ms-pyright.pyright"
 			]
         }
     }
