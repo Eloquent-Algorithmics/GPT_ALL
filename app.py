@@ -192,6 +192,33 @@ async def follow_conversation(
     return memory
 
 
+def is_successful_result(response_message, tools):
+    """
+    Define the criteria for a successful result.
+
+    Args:
+        response_message: The response message from the model.
+        tools: The tools available for use.
+
+    Returns:
+        A boolean indicating whether the result is successful.
+    """
+    # Ensure that tool_calls is an iterable, even if it's None or not present
+    tool_calls = getattr(response_message, "tool_calls", []) or []
+
+    # Check if there are no pending tool calls
+    no_pending_tool_calls = not any(tool_calls)
+
+    # Check if the response message contains a keyword or phrase indicating success
+    success_keywords = ["Here's what you asked for", "Your request has been processed"]
+    contains_success_keyword = any(
+        keyword in response_message.content for keyword in success_keywords
+    )
+
+    # The result is successful if there are no pending tool calls and the response contains a success keyword
+    return no_pending_tool_calls and contains_success_keyword
+
+
 async def run_conversation(
     messages,
     tools,
@@ -218,108 +245,18 @@ async def run_conversation(
     """
     logging.info('Starting conversation with user input line 219: %s', original_user_input)
 
-    memory = await follow_conversation(
-        user_text=original_user_input,
-        memory=memory,
-        mem_size=mem_size,
-        model=openai_defaults["model"],
-    )
-    memory.append({"role": "user", "content": original_user_input})
+    # Initialize a variable to keep track of the number of iterations
+    iteration_count = 0
+    max_iterations = 5  # Set the maximum number of iterations
+    successful_result = False
 
-    while len(json.dumps(memory)) > 128000:
-        memory.pop(0)
-        logging.debug('Line 231 removed oldest message due to context limit')
+    # Start the conversation loop
+    while iteration_count < max_iterations and not successful_result:
+        iteration_count += 1
+        logging.info(f'Iteration {iteration_count}: Generating response')
 
-    response = await main_client.chat.completions.create(
-        model=openai_defaults["model"],
-        messages=memory[-mem_size:],
-        tools=tools,
-        tool_choice="auto",
-        temperature=openai_defaults["temperature"],
-        top_p=openai_defaults["top_p"],
-        max_tokens=openai_defaults["max_tokens"],
-        frequency_penalty=openai_defaults["frequency_penalty"],
-        presence_penalty=openai_defaults["presence_penalty"],
-    )
-    logging.info('Line 244 received response from chat completion')
-
-    response_message = response.choices[0].message
-    tool_calls = (
-        response_message.tool_calls if hasattr(
-            response_message, "tool_calls"
-        ) else []
-    )
-
-    if response_message.content is not None:
-        memory.append(
-            {
-                "role": "assistant", "content": response_message.content
-            }
-        )
-        logging.info('Line 259 added assistant response to memory: %s', response_message.content)
-
-    if tool_calls:
-        messages.append(response_message)
-        executed_tool_call_ids = []
-
-        for tool_call in tool_calls:
-            function_name = tool_call.function.name
-
-            if function_name not in available_functions:
-                logging.warning('Line 269 function %s is not available', function_name)
-                continue
-
-            function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
-
-            logging.info(
-                "Line 276 calling function: %s args: %s",
-                function_name,
-                function_args,
-            )
-            # Inside your run_conversation function
-            if inspect.iscoroutinefunction(function_to_call):
-                function_response = await function_to_call(**function_args)
-            else:
-                function_response = function_to_call(**function_args)
-            logging.info(
-                "Line 286 function %s returned: %s",
-                function_name,
-                function_response,
-            )
-
-            if function_response is None:
-                function_response = "No response received from the function."
-            elif not isinstance(function_response, str):
-                function_response = json.dumps(function_response)
-
-            function_response_message = {
-                "role": "tool",
-                "name": function_name,
-                "content": function_response,
-                "tool_call_id": tool_call.id,
-            }
-
-            messages.append(function_response_message)
-            executed_tool_call_ids.append(tool_call.id)
-
-        # Ensure the next message prompts the assistant to use tool responses
-        messages.append(
-            {
-                "role": "user",
-                "content": (
-                    f"Using any data received from the tool calls, dynamically structure the workflow to "
-                    f"process and integrate the information. Continue to perform necessary operations, "
-                    f"including additional requests and tool calls, to ensure the accuracy and completeness "
-                    f"of the response. Your goal is to provide a well-reasoned and verified answer to the "
-                    f"original user request, which was: '{original_user_input}'. Adapt the workflow as needed "
-                    f"to address all aspects of the user's request and deliver a comprehensive solution."
-                ),
-            }
-        )
-
-        # Create next completion ensuring to pass the updated messages array
-        second_response = await main_client.chat.completions.create(
+        # Create a completion with the current state of messages
+        response = await main_client.chat.completions.create(
             model=openai_defaults["model"],
             messages=messages,
             tools=tools,
@@ -330,10 +267,91 @@ async def run_conversation(
             frequency_penalty=openai_defaults["frequency_penalty"],
             presence_penalty=openai_defaults["presence_penalty"],
         )
-        logging.info('Line 333 received second response from chat completion')
-        return second_response, memory
-    else:
-        return response, memory
+        logging.info(f'Iteration {iteration_count}: Received response from chat completion')
+
+        response_message = response.choices[0].message
+        tool_calls = (
+            response_message.tool_calls if hasattr(
+                response_message, "tool_calls"
+            ) else []
+        )
+
+        if response_message.content is not None:
+            memory.append(
+                {
+                    "role": "assistant", "content": response_message.content
+                }
+            )
+            logging.info('Line 259 added assistant response to memory: %s', response_message.content)
+
+        if tool_calls:
+            messages.append(response_message)
+            executed_tool_call_ids = []
+
+            for tool_call in tool_calls:
+                function_name = tool_call.function.name
+
+                if function_name not in available_functions:
+                    logging.warning('Line 269 function %s is not available', function_name)
+                    continue
+
+                function_to_call = available_functions[function_name]
+                function_args = json.loads(tool_call.function.arguments)
+
+                logging.info(
+                    "Line 276 calling function: %s args: %s",
+                    function_name,
+                    function_args,
+                )
+                try:
+                    if inspect.iscoroutinefunction(function_to_call):
+                        function_response = await function_to_call(**function_args)
+                    else:
+                        function_response = function_to_call(**function_args)
+
+                    logging.info(
+                        "Line 286 function %s returned: %s",
+                        function_name,
+                        function_response,
+                    )
+
+                    if function_response is None:
+                        function_response = "No response received from the function."
+                    elif not isinstance(function_response, str):
+                        function_response = json.dumps(function_response)
+
+                    function_response_message = {
+                        "role": "tool",
+                        "name": function_name,
+                        "content": function_response,
+                        "tool_call_id": tool_call.id,
+                    }
+
+                    messages.append(function_response_message)
+                    executed_tool_call_ids.append(tool_call.id)
+                except Exception as e:
+                    logging.error(f"Error executing tool {function_name}: {e}")
+                    messages.append({
+                        "role": "assistant",
+                        "content": f"Sorry, there was an error with the tool {function_name}."
+                    })
+
+        # Check for a successful result or decide if further iterations are needed
+        successful_result = is_successful_result(response_message, tools)
+        if successful_result:
+            logging.info(f'Iteration {iteration_count}: Successful result achieved')
+            break  # Exit the loop if the result is successful
+
+        # Prepare for the next iteration if needed
+        if iteration_count < max_iterations and not successful_result:
+            messages.append({
+                "role": "user",
+                "content": "Please continue to assist with the request."
+            })
+            logging.info(f'Iteration {iteration_count}: Preparing for next iteration')
+
+    # Return the final response and memory
+    return response, memory
 
 
 async def main():
