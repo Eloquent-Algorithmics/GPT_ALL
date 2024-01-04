@@ -2,34 +2,77 @@
 # !/usr/bin/env python
 # coding: utf-8
 # Filename: audio_pyttsx3.py
-# File Path: output/audio_pyttsx3.py
+# File Path: output\audio_pyttsx3.py
+# Last modified by: ExplorerGT92
+# Last modified on: 2023/12/17
+# branch: voice_rec_and_tts
 
 """
-This module is responsible for handling TTS audio output.
-
-It uses pyttsx3 as the TTS engine.
+This module is responsible for handling audio output.
 
 """
 
 import os
-import logging
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 from typing import Union
 from io import BytesIO
 import pyttsx3
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 import pygame
-from config import TTS_ENGINE, TTS_VOICE_ID, TTS_RATE
+from dotenv import load_dotenv
+from config import TTS_ENGINE, TTS_VOICE_ID, TTS_RATE, ELEVENLABS_VOICE
 
-comtypes_logger = logging.getLogger('comtypes')
-# Set the logging level to WARNING to ignore DEBUG messages
-comtypes_logger.setLevel(logging.WARNING)
+# Import ElevenLabs functions
+from elevenlabs import generate, play, set_api_key, get_api_key, stream
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Set the ElevenLabs API key if it exists in the environment
+ELEVEN_API_KEY = os.getenv('ELEVEN_API_KEY')
+if ELEVEN_API_KEY:
+    set_api_key(ELEVEN_API_KEY)
+
+# Other functions remain unchanged...
+
+def tts_output(text):
+    """
+    This function outputs the given text as speech.
+
+    Args:
+        text (str): The text to output.
+    """
+
+    if TTS_ENGINE == "pyttsx3":
+        tts_output_pyttsx3(text)
+    elif TTS_ENGINE == "elevenlabs" and ELEVEN_API_KEY:
+        tts_output_elevenlabs(text)
+    else:
+        raise ValueError(f"Invalid TTS_ENGINE value or missing ElevenLabs API key: {TTS_ENGINE}")
+
+
+def tts_output_elevenlabs(text):
+    """
+    This function outputs the given text as speech using ElevenLabs API.
+
+    Args:
+        text (str): The text to output.
+    """
+    # Generate audio using ElevenLabs API
+    audio_bytes = generate(
+        text=text,
+        voice=ELEVENLABS_VOICE,  # Replace with the desired voice
+        model="eleven_multilingual_v2",
+        stream=False,  # Set to True if you want to stream the audio
+        output_format="mp3_44100_128"
+    )
+
+    # Play the generated audio
+    play(audio=audio_bytes)
 
 
 def initialize_audio():
     """
     This function initializes the audio system.
-
-    # TODO: Add support for other TTS engines.
     """
     pygame.mixer.pre_init(44100, -16, 2, 4096)
     pygame.mixer.init()
@@ -41,8 +84,6 @@ def play_audio(audio: Union[bytes, BytesIO]):
 
     Args:
         audio (bytes or BytesIO): The audio to play.
-
-    # TODO: Add support for other TTS engines.
     """
 
     if not isinstance(audio, (bytes, BytesIO)):
@@ -56,22 +97,6 @@ def play_audio(audio: Union[bytes, BytesIO]):
         pygame.time.wait(10)
 
 
-def tts_output(text):
-    """
-    This function outputs the given text as speech.
-
-    Args:
-        text (str): The text to output.
-
-    # TODO: Add support for other TTS engines.
-    """
-
-    if TTS_ENGINE == "pyttsx3":
-        tts_output_pyttsx3(text)
-    else:
-        raise ValueError(f"Invalid TTS_ENGINE value: {TTS_ENGINE}")
-
-
 def tts_output_pyttsx3(text):
 
     """
@@ -79,8 +104,6 @@ def tts_output_pyttsx3(text):
 
     Args:
         text (str): The text to output.
-    
-    # TODO: Add support for other TTS engines.
     """
 
     engine = pyttsx3.init('sapi5')

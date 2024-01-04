@@ -69,3 +69,5 @@ if TTS_VOICE_ID is None:
 
 # Configures the main app to use the local system TTS rate.
 TTS_RATE = int(os.getenv("TTS_RATE", str(150)))
+
+ELEVENLABS_VOICE = os.getenv("ELEVENLABS_VOICE", "Rachel")

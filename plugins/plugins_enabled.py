@@ -50,20 +50,6 @@ async def enable_plugins(available_functions, tools):
                 file_path = os.path.join(root, file)
                 enable_plugins_logger.info("Found plugin file: %s", file_path)
 
-                # Generate the environment variable name
-                env_var_name = "ENABLE_%s" % file[:-3].upper()
-                plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"
-                enable_plugins_logger.info(
-                    "Environment variable %s is set to %s",
-                    env_var_name,
-                    plugin_enabled
-                )
-
-                # If the plugin is not enabled, skip to the next file
-                if not plugin_enabled:
-                    enable_plugins_logger.info("Plugin %s is not enabled.", file[:-3])
-                    continue
-
                 # Import the module dynamically
                 spec = importlib.util.spec_from_file_location(
                     file[:-3], file_path
@@ -81,7 +67,7 @@ async def enable_plugins(available_functions, tools):
                     if issubclass(cls, PluginBase) and cls is not PluginBase:
                         enable_plugins_logger.info("Found plugin class: %s", cls.__name__)
 
-                        # Check if the plugin is enabled
+                        # Generate the environment variable name based on the class name
                         env_var_name = "ENABLE_%s" % cls.__name__.upper()
                         plugin_enabled = os.getenv(env_var_name, "false").lower() == "true"
                         enable_plugins_logger.info(
