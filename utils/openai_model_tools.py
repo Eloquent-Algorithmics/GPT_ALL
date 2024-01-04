@@ -1,8 +1,8 @@
 
 # !/usr/bin/env python
 # coding: utf-8
-# Filename: core_tools.py
-# Path: utils/core_tools.py
+# Filename: openai_model_tools.py
+# Path: utils/openai_model_tools.py
 
 """
 Core tools.

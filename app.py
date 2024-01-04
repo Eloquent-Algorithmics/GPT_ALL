@@ -43,6 +43,7 @@ from utils.openai_model_tools import (
     ask_chat_gpt_4_0613_synchronous,
     ask_chat_gpt_4_0613_asynchronous,
 )
+from utils.openai_dalle_tools import generate_an_image_with_dalle3
 from utils.core_tools import get_current_date_time, display_help
 from output_methods.audio_pyttsx3 import tts_output
 from plugins.plugins_enabled import enable_plugins
@@ -380,6 +381,7 @@ async def main():
         "ask_chat_gpt_4_0314_asynchronous": ask_chat_gpt_4_0314_asynchronous,
         "ask_chat_gpt_4_0613_synchronous": ask_chat_gpt_4_0613_synchronous,
         "ask_chat_gpt_4_0613_asynchronous": ask_chat_gpt_4_0613_asynchronous,
+        "generate_an_image_with_dalle3": generate_an_image_with_dalle3,
         # Add more core functions here
     }
     logging.info('Initialized available functions line 385')
@@ -493,19 +495,56 @@ async def main():
                 },
             },
         },
+        {
+            "type": "function",
+            "function": {
+                "name": "generate_an_image_with_dalle3",
+                "description": "This function allows you to generate an image with DALL-E 3.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "prompt": {
+                            "type": "string",
+                            "description": "The prompt to use for image generation. 4000 characters max.",
+                        },
+                        "n": {
+                            "type": "integer",
+                            "description": "The number of images to generate. 10 max.",
+                        },
+                        "size": {
+                            "type": "string",
+                            "description": "The size of the image to generate. 1024x1024, 1792x1024, or 1024x1792.",
+                        },
+                        "quality": {
+                            "type": "string",
+                            "description": "The quality of the image to generate. standard or hd.",
+                        },
+                        "style": {
+                            "type": "string",
+                            "description": "The style of the image to generate. natural or vivid.",
+                        },
+                        "response_format": {
+                            "type": "string",
+                            "description": "The format of the response. b64_json or url.",
+                        },
+                    },
+                    "required": ["prompt"],
+                },
+            },
+        },
     ]
-    logging.info('Defined available core tools line 497')
+    logging.info('Defined available core tools line 532')
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
     available_functions, tools = await enable_plugins(
         available_functions,
         tools
     )
-    logging.info('Enabled plugins line 504')
+    logging.info('Enabled plugins line 539')
 
     # Initialize the conversation memory
     memory = []
-    logging.info('Initialized conversation memory line 508')
+    logging.info('Initialized conversation memory line 543')
 
     # Main Loop
     while True:
@@ -513,7 +552,7 @@ async def main():
         user_input = Prompt.ask(
             "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
-        logging.info('Line 516 received user input: %s', user_input)
+        logging.info('Line 551 received user input: %s', user_input)
 
         # Check if the user wants to exit the program
         if user_input.lower() == "quit":
@@ -572,16 +611,16 @@ async def main():
                     console.print("\n" + final_text, style="green")
             else:
                 # Print an error message if the model did not return a response
-                logging.warning('Model did not return a response line 575')
+                logging.warning('Model did not return a response line 610')
                 console.print("\nI'm not sure how to help with that.", style="red")
         else:
             # Print an error message if the model did not return a response
-            logging.warning('Model did not return a response line 579')
+            logging.warning('Model did not return a response line 614')
             console.print("\nI'm not sure how to help with that.", style="red")
 
         # Remove tools from the tools list after processing
         tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
-        logging.info('Removed used tools from the tools list line 584')
+        logging.info('Removed used tools from the tools list line 619')
 
 
 # Run the main function
