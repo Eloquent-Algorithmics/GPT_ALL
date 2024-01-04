@@ -5,7 +5,7 @@
 # Run command: python -m app
 
 """
-This is the main part of the script
+This is the main operations of the script
 """
 
 import argparse
@@ -88,10 +88,14 @@ if LOGGING_ENABLED:
             filename=LOGGING_FILE
         )
         # Set the logging level for specific libraries
-        logging.getLogger('httpcore.http11').setLevel(logging.INFO)
-        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
-        logging.getLogger('httpcore').setLevel(logging.WARNING)
-        logging.getLogger('markdown_it.rules_block').setLevel(logging.WARNING)
+        logging.getLogger(
+            'httpcore.http11').setLevel(logging.INFO)
+        logging.getLogger(
+            'googleapiclient.discovery_cache').setLevel(logging.WARNING)
+        logging.getLogger(
+            'httpcore').setLevel(logging.WARNING)
+        logging.getLogger(
+            'markdown_it.rules_block').setLevel(logging.WARNING)
     else:
         logging.basicConfig(level=level, format=LOGGING_FORMAT)
 else:
@@ -216,7 +220,10 @@ async def run_conversation(
     Returns:
         The final response from the model.
     """
-    logging.info('Starting conversation with user input line 219: %s', original_user_input)
+    logging.info(
+        'Starting conversation with user input line 219: %s',
+        original_user_input
+    )
 
     memory = await follow_conversation(
         user_text=original_user_input,
@@ -256,7 +263,10 @@ async def run_conversation(
                 "role": "assistant", "content": response_message.content
             }
         )
-        logging.info('Line 259 added assistant response to memory: %s', response_message.content)
+        logging.info(
+            'Line 259 added assistant response to memory: %s',
+            response_message.content
+        )
 
     if tool_calls:
         messages.append(response_message)
@@ -266,7 +276,10 @@ async def run_conversation(
             function_name = tool_call.function.name
 
             if function_name not in available_functions:
-                logging.warning('Line 269 function %s is not available', function_name)
+                logging.warning(
+                    'Line 269 function %s is not available',
+                    function_name
+                )
                 continue
 
             function_to_call = available_functions[function_name]
@@ -283,7 +296,7 @@ async def run_conversation(
             else:
                 function_response = function_to_call(**function_args)
             logging.info(
-                "Line 286 function %s returned: %s",
+                "Line 285 function %s returned: %s",
                 function_name,
                 function_response,
             )
@@ -341,9 +354,9 @@ async def main():
     This is the main function of the script.
 
     Returns:
-        The final response from the model.
+        The final response from the LLM to the user.
+
     """
-    logging.info('Starting main function Line 346')
     os.system("cls" if os.name == "nt" else "clear")
 
     parser = argparse.ArgumentParser(
@@ -352,13 +365,9 @@ async def main():
     parser.add_argument(
         "--talk", action="store_true", help="Use TTS for the final response"
     )
-    parser.add_argument(
-        "--intro", action="store_true", help="Play an intro video at startup"
-    )
     args = parser.parse_args()
 
     use_tts = args.talk
-    logging.info('Use TTS: %s', use_tts)
 
     console.print(Markdown("# 👋  GPT_ALL 👋"), style="bold blue")
 
@@ -371,7 +380,7 @@ async def main():
         "ask_chat_gpt_4_0613_asynchronous": ask_chat_gpt_4_0613_asynchronous,
         # Add more core functions here
     }
-    logging.info('Initialized available functions line 374')
+    logging.info('Initialized available functions line 372')
 
     # Define the available core tools
     tools = [
@@ -483,18 +492,18 @@ async def main():
             },
         },
     ]
-    logging.info('Defined available core tools line 486')
+    logging.info('Defined available core tools line 484')
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
     available_functions, tools = await enable_plugins(
         available_functions,
         tools
     )
-    logging.info('Enabled plugins line 493')
+    logging.info('Enabled plugins line 491')
 
     # Initialize the conversation memory
     memory = []
-    logging.info('Initialized conversation memory line 497')
+    logging.info('Initialized conversation memory line 495')
 
     # Main Loop
     while True:
@@ -502,7 +511,7 @@ async def main():
         user_input = Prompt.ask(
             "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
-        logging.info('Line 505 received user input: %s', user_input)
+        logging.info('Line 503 received user input: %s', user_input)
 
         # Check if the user wants to exit the program
         if user_input.lower() == "quit":
@@ -528,7 +537,7 @@ async def main():
             },
             {"role": "user", "content": f"{user_input}"},
         ]
-        logging.info('Line 531 prepared conversation messages')
+        logging.info('Line 529 prepared conversation messages')
 
         # Start the spinner
         with live_spinner:
@@ -545,15 +554,13 @@ async def main():
                 mem_size=200,
                 memory=memory,
             )
-
             # Stop the spinner
             live_spinner.stop()
-            logging.info('Stopped spinner')
 
         # Print the final response from the model or use TTS
         if final_response:
             final_text = final_response.choices[0].message.content
-            logging.info("Line 556 final response from model: %s', final_text")
+            logging.info("Line 554 final response from model: %s', final_text")
             if use_tts:
                 # Use TTS to output the final response
                 console.print("\n" + final_text, style="green")
@@ -563,12 +570,12 @@ async def main():
                 console.print("\n" + final_text, style="green")
         else:
             # Print an error message if the model did not return a response
-            logging.warning('Model did not return a response line 566')
+            logging.warning('Model did not return a response line 564')
             console.print("\nI'm not sure how to help with that.", style="red")
 
         # Remove tools from the tools list after processing
         tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
-        logging.info('Removed used tools from the tools list line 571')
+        logging.info('Removed used tools from the tools list line 569')
 
 
 # Run the main function
