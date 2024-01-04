@@ -1,13 +1,13 @@
 aiohttp==3.9.1
 appdirs==1.4.4
 BeautifulSoup4==4.12.2
+elevenlabs==0.2.27
 fsspec==2023.12
 funcy==2.0
 google-auth-oauthlib==1.2.0
 google-api-python-client==2.111.0
 google-cloud-aiplatform==1.38.1
 google-generativeai==0.3.1
-moviepy==1.0.3
 openai==1.6.1
 pygame==2.5.2
 pyttsx3==2.90
