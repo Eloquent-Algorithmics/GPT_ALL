@@ -88,10 +88,14 @@ if LOGGING_ENABLED:
             filename=LOGGING_FILE
         )
         # Set the logging level for specific libraries
-        logging.getLogger('httpcore.http11').setLevel(logging.INFO)
-        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
-        logging.getLogger('httpcore').setLevel(logging.WARNING)
-        logging.getLogger('markdown_it.rules_block').setLevel(logging.WARNING)
+        logging.getLogger(
+            'httpcore.http11').setLevel(logging.INFO)
+        logging.getLogger(
+            'googleapiclient.discovery_cache').setLevel(logging.WARNING)
+        logging.getLogger(
+            'httpcore').setLevel(logging.WARNING)
+        logging.getLogger(
+            'markdown_it.rules_block').setLevel(logging.WARNING)
     else:
         logging.basicConfig(level=level, format=LOGGING_FORMAT)
 else:
@@ -216,7 +220,10 @@ async def run_conversation(
     Returns:
         The final response from the model.
     """
-    logging.info('Starting conversation with user input line 219: %s', original_user_input)
+    logging.info(
+        'Starting conversation with user input line 219: %s',
+        original_user_input
+    )
 
     memory = await follow_conversation(
         user_text=original_user_input,
@@ -256,7 +263,10 @@ async def run_conversation(
                 "role": "assistant", "content": response_message.content
             }
         )
-        logging.info('Line 259 added assistant response to memory: %s', response_message.content)
+        logging.info(
+            'Line 259 added assistant response to memory: %s',
+            response_message.content
+        )
 
     if tool_calls:
         messages.append(response_message)
@@ -266,7 +276,10 @@ async def run_conversation(
             function_name = tool_call.function.name
 
             if function_name not in available_functions:
-                logging.warning('Line 269 function %s is not available', function_name)
+                logging.warning(
+                    'Line 269 function %s is not available',
+                    function_name
+                )
                 continue
 
             function_to_call = available_functions[function_name]
