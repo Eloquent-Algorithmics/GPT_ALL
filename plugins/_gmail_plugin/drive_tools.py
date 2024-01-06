@@ -246,23 +246,6 @@ drive_tools_list = [
     {
         "type": "function",
         "function": {
-            "name": "upload_file",
-            "description": "Upload or update a file to Google Drive based on user input.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "user_input": {
-                        "type": "string",
-                        "description": "The user input containing file name, content, and other metadata.",
-                    }
-                },
-                "required": ["user_input"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "list_files",
             "description": "List files in a specified Google Drive folder.",
             "parameters": {

@@ -42,6 +42,7 @@ from utils.openai_model_tools import (
     ask_chat_gpt_4_0314_asynchronous,
     ask_chat_gpt_4_0613_synchronous,
     ask_chat_gpt_4_0613_asynchronous,
+    ask_gpt_4_vision,
 )
 from utils.openai_dalle_tools import generate_an_image_with_dalle3
 from utils.core_tools import get_current_date_time, display_help
@@ -382,19 +383,13 @@ async def main():
         "ask_chat_gpt_4_0613_synchronous": ask_chat_gpt_4_0613_synchronous,
         "ask_chat_gpt_4_0613_asynchronous": ask_chat_gpt_4_0613_asynchronous,
         "generate_an_image_with_dalle3": generate_an_image_with_dalle3,
+        "ask_gpt_4_vision": ask_gpt_4_vision,
         # Add more core functions here
     }
     logging.info('Initialized available functions line 385')
 
-    # Define the available core tools
+    # Define core tools here
     tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_current_date_time",
-                "description": "Get the current date and time from the local machine.",
-            },
-        },
         {
             "type": "function",
             "function": {
@@ -498,42 +493,21 @@ async def main():
         {
             "type": "function",
             "function": {
-                "name": "generate_an_image_with_dalle3",
-                "description": "This function allows you to generate an image with DALL-E 3.",
+                "name": "ask_gpt_4_vision",
+                "description": "Ask GPT-4 Vision a question about a specific image file located in the 'uploads' folder.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "prompt": {
+                        "image_name": {
                             "type": "string",
-                            "description": "The prompt to use for image generation. 4000 characters max.",
-                        },
-                        "n": {
-                            "type": "integer",
-                            "description": "The number of images to generate. 10 max.",
-                        },
-                        "size": {
-                            "type": "string",
-                            "description": "The size of the image to generate. 1024x1024, 1792x1024, or 1024x1792.",
-                        },
-                        "quality": {
-                            "type": "string",
-                            "description": "The quality of the image to generate. standard or hd.",
-                        },
-                        "style": {
-                            "type": "string",
-                            "description": "The style of the image to generate. natural or vivid.",
-                        },
-                        "response_format": {
-                            "type": "string",
-                            "description": "The format of the response. b64_json or url.",
+                            "description": "The name of the image file in the 'uploads' folder.",
                         },
                     },
-                    "required": ["prompt"],
+                    "required": ["image_name"],
                 },
             },
         },
     ]
-    logging.info('Defined available core tools line 532')
 
     # Use the load_plugins_and_get_tools function to conditionally add tools
     available_functions, tools = await enable_plugins(
@@ -544,7 +518,6 @@ async def main():
 
     # Initialize the conversation memory
     memory = []
-    logging.info('Initialized conversation memory line 543')
 
     # Main Loop
     while True:
@@ -552,7 +525,7 @@ async def main():
         user_input = Prompt.ask(
             "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
-        logging.info('Line 551 received user input: %s', user_input)
+        logging.info('Line 555 received user input: %s', user_input)
 
         # Check if the user wants to exit the program
         if user_input.lower() == "quit":
@@ -570,7 +543,7 @@ async def main():
         messages = [
             {
                 "role": "system",
-                "content": "You are an AI Assistant integrated within a Python-based application designed to assist users by leveraging a suite of tools and functions, both synchronous and asynchronous, to process user requests and manage dynamic workflows. Your capabilities include interacting with a larger AI language model (LLM) for synchronous and asynchronous assistance, accessing the current date and time, and utilizing enabled plugins for additional functionalities. You are expected to maintain a conversation memory, ensuring the context remains within the token limit for efficient processing. When responding to user requests, consider the available tools and their descriptions, dynamically structuring workflows to include multiple turns where necessary. Prioritize reasoning and delivering the best possible response based on the users original request, taking into account the data gathered and actions completed during the interaction. Ensure that your responses are clear, concise, and directly address the users needs, while also being prepared to handle errors or unexpected situations gracefully.",
+                "content": f"{MAIN_SYSTEM_PROMPT}",
             },
             {
                 "role": "assistant",
@@ -578,11 +551,10 @@ async def main():
             },
             {"role": "user", "content": f"{user_input}"},
         ]
-        logging.info('Line 542 prepared conversation messages')
+        logging.info('Line 581 prepared conversation messages')
 
-        # Start the spinner
         with live_spinner:
-            # Start the spinner
+
             live_spinner.start()
 
             # Pass the user input and memory to the run_conversation function
@@ -620,7 +592,7 @@ async def main():
 
         # Remove tools from the tools list after processing
         tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
-        logging.info('Removed used tools from the tools list line 619')
+        logging.info('Removed used tools from the tools list line 622')
 
 
 # Run the main function

@@ -9,11 +9,16 @@ Core tools.
 
 This file contains the core tools for the AI Assistant.
 """
-
+import requests
+import base64
 from openai import OpenAI, AsyncOpenAI
 from rich.console import Console
+from pathlib import Path
+from plugins._gmail_plugin.drive_tools import (
+    available_functions,
+)
+from 
 from config import (
-    live_spinner,
     OPENAI_API_KEY,
     OPENAI_ORG_ID,
 )
@@ -93,16 +98,15 @@ async def ask_chat_gpt_4_0314_asynchronous(**kwargs) -> str:
         {"role": "assistant", "content": text},
     ]
 
-    with live_spinner:
-        response = await gpt4_client_async.chat.completions.create(
-            model="gpt-4-0314",
-            messages=messages,
-            temperature=0.2,
-            max_tokens=2048,
-            top_p=0.5,
-            frequency_penalty=0,
-            presence_penalty=0,
-        )
+    response = await gpt4_client_async.chat.completions.create(
+        model="gpt-4-0314",
+        messages=messages,
+        temperature=0.2,
+        max_tokens=2048,
+        top_p=0.5,
+        frequency_penalty=0,
+        presence_penalty=0,
+    )
 
     if (
         response.choices
@@ -136,16 +140,15 @@ def ask_chat_gpt_4_0613_synchronous(**kwargs) -> str:
         {"role": "assistant", "content": text},
     ]
 
-    with live_spinner:
-        response = gpt4_client.chat.completions.create(
-            model="gpt-4-613",
-            messages=messages,
-            temperature=0.2,
-            max_tokens=2048,
-            top_p=0.5,
-            frequency_penalty=0,
-            presence_penalty=0,
-        )
+    response = gpt4_client.chat.completions.create(
+        model="gpt-4-613",
+        messages=messages,
+        temperature=0.2,
+        max_tokens=2048,
+        top_p=0.5,
+        frequency_penalty=0,
+        presence_penalty=0,
+    )
 
     # Check if the response has the expected structure and content
     if (
@@ -181,16 +184,15 @@ async def ask_chat_gpt_4_0613_asynchronous(**kwargs) -> str:
         {"role": "assistant", "content": text},
     ]
 
-    with live_spinner:
-        response = await gpt4_client_async.chat.completions.create(
-            model="gpt-4-0613",
-            messages=messages,
-            temperature=0.2,
-            max_tokens=2048,
-            top_p=0.5,
-            frequency_penalty=0,
-            presence_penalty=0,
-        )
+    response = await gpt4_client_async.chat.completions.create(
+        model="gpt-4-0613",
+        messages=messages,
+        temperature=0.2,
+        max_tokens=2048,
+        top_p=0.5,
+        frequency_penalty=0,
+        presence_penalty=0,
+    )
 
     if (
         response.choices
@@ -200,3 +202,61 @@ async def ask_chat_gpt_4_0613_asynchronous(**kwargs) -> str:
         return response.choices[0].message.content
     else:
         return "An error occurred or no content was returned."
+
+
+# Function to encode the image
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
+
+# Function to send the image to the vision model
+async def ask_gpt_4_vision(image_name, drive_service=None):
+    # Check if the image exists in the local uploads folder
+    local_image_path = Path("uploads") / image_name
+    if local_image_path.is_file():
+        base64_image = encode_image(local_image_path)
+    else:
+        # If not found locally, search in Google Drive (if drive_service is provided)
+        if drive_service:
+            files_info = await available_functions["list_files"](drive_service, "MyDrive/GPT_ALL/uploads")
+            file_id = next((f['id'] for f in files_info if f['name'] == image_name), None)
+            if file_id:
+                # Download the file from Google Drive
+                local_image_path = await available_functions["download_file"](drive_service, file_id, "uploads/")
+                base64_image = encode_image(local_image_path)
+            else:
+                return "Image not found in local uploads folder or Google Drive."
+        else:
+            return "Image not found in local uploads folder."
+
+    # Send the request to the vision model
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
+    }
+
+    payload = {
+        "model": "gpt-4-vision-preview",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "question"
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}"
+                        }
+                    }
+                ]
+            }
+        ],
+        "max_tokens": 600
+    }
+
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    return response.json()
