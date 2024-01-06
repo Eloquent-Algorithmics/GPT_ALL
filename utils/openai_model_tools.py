@@ -11,6 +11,7 @@ This file contains the core tools for the AI Assistant.
 """
 import requests
 import base64
+import mimetypes
 from openai import OpenAI, AsyncOpenAI
 from rich.console import Console
 from pathlib import Path
@@ -206,9 +207,13 @@ async def ask_chat_gpt_4_0613_asynchronous(**kwargs) -> str:
 
 # Function to encode the image
 def encode_image(image_path):
+    mime_type, _ = mimetypes.guess_type(image_path)
+    if mime_type is None:
+        raise ValueError("Could not determine the MIME type of the image.")
+    
     with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
-
+        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+    return f"data:{mime_type};base64,{encoded_string}"
 
 # Function to send the image to the vision model
 async def ask_gpt_4_vision(image_name, drive_service=None):
@@ -249,7 +254,7 @@ async def ask_gpt_4_vision(image_name, drive_service=None):
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
+                            "url": base64_image
                         }
                     }
                 ]
