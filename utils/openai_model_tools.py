@@ -18,7 +18,6 @@ from pathlib import Path
 from plugins._gmail_plugin.drive_tools import (
     available_functions,
 )
-from 
 from config import (
     OPENAI_API_KEY,
     OPENAI_ORG_ID,
