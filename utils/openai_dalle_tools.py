@@ -18,7 +18,7 @@ api_key = OPENAI_API_KEY
 openai_org_id = OPENAI_ORG_ID
 
 # Create an OpenAI client instance using keyword arguments
-client = OpenAI(api_key=api_key, organization=openai_org_id, timeout=10)
+client = OpenAI(api_key=api_key, organization=openai_org_id, timeout=60)
 
 # Create an AsyncOpenAI client instance using keyword arguments
 client_async = AsyncOpenAI(api_key=api_key, organization=openai_org_id, timeout=60)

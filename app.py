@@ -393,6 +393,13 @@ async def main():
         {
             "type": "function",
             "function": {
+                "name": "get_current_date_time",
+                "description": "Get the current date and time from the local machine.",
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "ask_chat_gpt_4_0314_synchronous",
                 "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
                 "parameters": {
@@ -504,6 +511,43 @@ async def main():
                         },
                     },
                     "required": ["image_name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "generate_an_image_with_dalle3",
+                "description": "Generate an image with DALL-E 3.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "prompt": {
+                            "type": "string",
+                            "description": "The prompt to use for image generation.",
+                        },
+                        "n": {
+                            "type": "integer",
+                            "description": "The number of images to generate.",
+                        },
+                        "size": {
+                            "type": "string",
+                            "description": "The image size to generate.",
+                        },
+                        "quality": {
+                            "type": "string",
+                            "description": "The image quality to generate.",
+                        },
+                        "style": {
+                            "type": "string",
+                            "description": "The image style to generate.",
+                        },
+                        "response_format": {
+                            "type": "string",
+                            "description": "The response format to use for image generation.",
+                        },
+                    },
+                    "required": ["prompt"],
                 },
             },
         },
