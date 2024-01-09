@@ -347,7 +347,7 @@ async def run_conversation(
             frequency_penalty=openai_defaults["frequency_penalty"],
             presence_penalty=openai_defaults["presence_penalty"],
         )
-        logging.info('Line 348 received second response from chat completion')
+        logging.info('Line 350 received second response from chat completion')
         return second_response, memory
     else:
         return response, memory
@@ -384,9 +384,7 @@ async def main():
         "ask_chat_gpt_4_0613_asynchronous": ask_chat_gpt_4_0613_asynchronous,
         "generate_an_image_with_dalle3": generate_an_image_with_dalle3,
         "ask_gpt_4_vision": ask_gpt_4_vision,
-        # Add more core functions here
     }
-    logging.info('Initialized available functions line 385')
 
     # Define core tools here
     tools = [
@@ -558,7 +556,7 @@ async def main():
         available_functions,
         tools
     )
-    logging.info('Enabled plugins line 539')
+    logging.info('Enabled plugins line 560')
 
     # Initialize the conversation memory
     memory = []
