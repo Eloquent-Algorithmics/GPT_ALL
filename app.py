@@ -156,7 +156,10 @@ async def follow_conversation(
     Returns:
         The conversation memory.
     """
-    logging.info('Starting conversation with user input from line 157: %s', user_text)
+    logging.info(
+        'Starting conversation with user input from line 159: %s',
+        user_text
+    )
 
     ind = min(mem_size, len(memory))
     if ind == 0:
