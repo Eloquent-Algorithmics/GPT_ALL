@@ -541,11 +541,11 @@ async def main():
                         },
                         "style": {
                             "type": "string",
-                            "description": "The image style to generate.",
+                            "description": "The image style to generate. natural or vivid",
                         },
                         "response_format": {
                             "type": "string",
-                            "description": "The response format to use for image generation.",
+                            "description": "The response format to use for image generation b64_json or url.",
                         },
                     },
                     "required": ["prompt"],
