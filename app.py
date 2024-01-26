@@ -40,6 +40,8 @@ from config import (
 from utils.openai_model_tools import (
     ask_chat_gpt_4_0314_synchronous,
     ask_chat_gpt_4_0314_asynchronous,
+    ask_chat_gpt_4_32k_0314_synchronous,
+    ask_chat_gpt_4_32k_0314_asynchronous,
     ask_chat_gpt_4_0613_synchronous,
     ask_chat_gpt_4_0613_asynchronous,
     ask_gpt_4_vision,
@@ -47,6 +49,7 @@ from utils.openai_model_tools import (
 from utils.openai_dalle_tools import generate_an_image_with_dalle3
 from utils.core_tools import get_current_date_time, display_help
 from output_methods.audio_pyttsx3 import tts_output
+
 from plugins.plugins_enabled import enable_plugins
 
 sys.path.append(str(Path(__file__).parent))
@@ -383,6 +386,8 @@ async def main():
         "get_current_date_time": get_current_date_time,
         "ask_chat_gpt_4_0314_synchronous": ask_chat_gpt_4_0314_synchronous,
         "ask_chat_gpt_4_0314_asynchronous": ask_chat_gpt_4_0314_asynchronous,
+        "ask_chat_gpt_4_32k_0314_synchronous": ask_chat_gpt_4_32k_0314_synchronous,
+        "ask_chat_gpt_4_32k_0314_asynchronous": ask_chat_gpt_4_32k_0314_asynchronous,
         "ask_chat_gpt_4_0613_synchronous": ask_chat_gpt_4_0613_synchronous,
         "ask_chat_gpt_4_0613_asynchronous": ask_chat_gpt_4_0613_asynchronous,
         "generate_an_image_with_dalle3": generate_an_image_with_dalle3,
@@ -402,7 +407,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314_synchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -427,7 +432,57 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0314_asynchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "temperature": {
+                            "type": "integer",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
+                        },
+                        "question": {
+                            "type": "string",
+                            "description": "What are you, the ai assistant, requesting to be done with the text you are providing?",
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to be analyzed",
+                        },
+                    },
+                    "required": ["question", "text"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ask_chat_gpt_4_32k_0314_synchronous",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "temperature": {
+                            "type": "integer",
+                            "description": "The temperature associated with request: 0 for factual, 2 for creative.",
+                        },
+                        "question": {
+                            "type": "string",
+                            "description": "What are you, the ai assistant, requesting to be done with the text you are providing?",
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to be analyzed",
+                        },
+                    },
+                    "required": ["question", "text"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ask_chat_gpt_4_32k_0314_asynchronous",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -452,7 +507,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0613_synchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -467,6 +522,14 @@ async def main():
                         "text": {
                             "type": "string",
                             "description": "The text to be analyzed",
+                        },
+                        "tools": {
+                            "type": "string",
+                            "description": "The tools to use for the request.",
+                        },
+                        "tool_choice": {
+                            "type": "string",
+                            "description": "The tool choice to use for the request.",
                         },
                     },
                     "required": ["question", "text"],
@@ -477,7 +540,7 @@ async def main():
             "type": "function",
             "function": {
                 "name": "ask_chat_gpt_4_0613_asynchronous",
-                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance. This LLMs maximum token output limit is 2048 and this model's maximum context length is 8192 tokens",
+                "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -492,6 +555,14 @@ async def main():
                         "text": {
                             "type": "string",
                             "description": "The text to be analyzed",
+                        },
+                        "tools": {
+                            "type": "string",
+                            "description": "The tools to use for the request.",
+                        },
+                        "tool_choice": {
+                            "type": "string",
+                            "description": "The tool choice to use for the request.",
                         },
                     },
                     "required": ["question", "text"],
@@ -622,7 +693,7 @@ async def main():
                 if use_tts:
                     # Use TTS to output the final response
                     console.print("\n" + final_text, style="green")
-                    tts_output(final_text)
+                    tts_output(final_text)  # Call the tts_output function directly
                 else:
                     # Print the final response to the console
                     console.print("\n" + final_text, style="green")
