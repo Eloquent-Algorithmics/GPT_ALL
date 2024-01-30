@@ -19,7 +19,7 @@
           rows="1"
         ></textarea>
         <div class="tabBar">
-          <button id="clear-chat-btn">Clear</button>
+          <button id="clear-chat-btn" type="button">Clear</button>
           <input type="submit" value="Send" />
         </div>
       </form>
@@ -28,6 +28,7 @@
         const chat = document.getElementById("chat-window");
         const inputForm = document.getElementById("input-form");
         const userInput = document.getElementById("user-input");
+        const clearChatBtn = document.getElementById("clear-chat-btn");
 
         let memory = [];
 
@@ -54,11 +55,14 @@
                 chat.innerHTML += `<div class="message-wrapper ai"><div class="ai-message">Error: Unable to get a response from the assistant.</div></div>`;
             }
         });
+
+        clearChatBtn.addEventListener("click", () => {
+            chat.innerHTML = "";
+        });
     </script>
     <script>
         const userAvatarUrl = "/static/U1.webp";
         const aiAvatarUrl = "/static/J5.webp";
     </script>
-    <script src="/static/chat.js"></script>
 </body>
 </html>
