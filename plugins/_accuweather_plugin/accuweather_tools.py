@@ -14,7 +14,6 @@ See https://developer.accuweather.com/ for more information.
 
 """
 
-import logging
 import json
 import aiohttp
 import spacy
@@ -124,11 +123,9 @@ async def get_current_weather(api_key, base_url, location: str = "Atlanta"):
                 return json.dumps(weather_info)
 
         except aiohttp.ClientError as error:
-            logging.error("HTTP error occurred: %s", error)
-            return json.dumps({"error": "Failed to fetch weather data"})
+            return json.dumps({error, "Failed to fetch weather data"})
         except ValueError as error:
-            logging.error("An error occurred: %s", error)
-            return json.dumps({"error": "An unexpected error occurred"})
+            return json.dumps({error, "An unexpected error occurred"})
 
 
 async def get_one_hour_weather_forecast(api_key, base_url, location: str = "Atlanta"):
@@ -138,21 +135,17 @@ async def get_one_hour_weather_forecast(api_key, base_url, location: str = "Atla
     If no location provided or an empty string passed, defaults to Atlanta.
     """
 
-    # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
 
-    # Strip any extra quotes from the location string
     location = location.strip('"')
 
-    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
-    # Get the hourly weather forecast for the given location
     url = f"{base_url}/forecasts/v1/hourly/1hour/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -199,8 +192,7 @@ async def get_one_hour_weather_forecast(api_key, base_url, location: str = "Atla
         except aiohttp.ClientError as e:
             return json.dumps({"error": str(e)})
         except ValueError as error:
-            logging.error("An error occurred line 159: %s", error)
-            return json.dumps({"error": "An unexpected error occurred"})
+            return json.dumps({error, "An unexpected error occurred"})
 
 
 async def get_twelve_hour_weather_forecast(api_key, base_url, location: str = "Atlanta"):
@@ -210,21 +202,17 @@ async def get_twelve_hour_weather_forecast(api_key, base_url, location: str = "A
     If no location provided or an empty string passed, defaults to Atlanta.
 
     """
-    # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
 
-    # Strip any extra quotes from the location string
     location = location.strip('"')
 
-    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
-    # Get 12 hours of hourly forecast weather for the given location
     url = f"{base_url}/forecasts/v1/hourly/12hour/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -275,11 +263,9 @@ async def get_twelve_hour_weather_forecast(api_key, base_url, location: str = "A
                 return json.dumps(forecasts_info)
 
         except aiohttp.ClientError as error:
-            logging.error("HTTP error occurred line 156: %s", error)
-            return json.dumps({"error": "Failed to fetch weather data"})
+            return json.dumps({error,"Failed to fetch weather data"})
         except ValueError as error:
-            logging.error("An error occurred line 159: %s", error)
-            return json.dumps({"error": "An unexpected error occurred"})
+            return json.dumps({error, "An unexpected error occurred"})
 
 
 async def get_one_day_weather_forecast(api_key, base_url, location: str = "Atlanta"):
@@ -289,21 +275,17 @@ async def get_one_day_weather_forecast(api_key, base_url, location: str = "Atlan
     If no location provided or an empty string passed, defaults to Atlanta.
 
     """
-    # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
 
-    # Strip any extra quotes from the location string
     location = location.strip('"')
 
-    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
-    # Get the daily forecast weather for the given location
     url = f"{base_url}/forecasts/v1/daily/1day/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -318,11 +300,9 @@ async def get_one_day_weather_forecast(api_key, base_url, location: str = "Atlan
                 return json.dumps(weather_info)
 
         except aiohttp.ClientError as error:
-            logging.error("HTTP error occurred line 156: %s", error)
-            return json.dumps({"error": "Failed to fetch weather data"})
+            return json.dumps({error, "Failed to fetch weather data"})
         except ValueError as error:
-            logging.error("An error occurred line 159: %s", error)
-            return json.dumps({"error": "An unexpected error occurred"})
+            return json.dumps({error, "An unexpected error occurred"})
 
 
 async def get_five_day_weather_forecast(api_key, base_url, location: str = "Atlanta"):
@@ -332,21 +312,17 @@ async def get_five_day_weather_forecast(api_key, base_url, location: str = "Atla
     If no location provided or an empty string passed, defaults to Atlanta.
 
     """
-    # Check if the location is an empty string and set it to the default
     if not location:
         location = "Atlanta"
 
-    # Strip any extra quotes from the location string
     location = location.strip('"')
 
-    # Get the location key for the given location
     location_key = await get_location_key(api_key, base_url, location)
     if not location_key:
         return json.dumps(
             {"error": "Failed to find location key for provided location"}
         )
 
-    # Get 5 days of forecasts weather for the given location
     url = f"{base_url}/forecasts/v1/daily/5day/{location_key}"
     params = {"apikey": api_key, "details": "true", "metric": "false"}
     async with aiohttp.ClientSession() as session:
@@ -361,11 +337,9 @@ async def get_five_day_weather_forecast(api_key, base_url, location: str = "Atla
                 return json.dumps(weather_info)
 
         except aiohttp.ClientError as error:
-            logging.error("HTTP error occurred line 156: %s", error)
-            return json.dumps({"error": "Failed to fetch weather data"})
+            return json.dumps({error, "Failed to fetch weather data"})
         except ValueError as error:
-            logging.error("An error occurred line 159: %s", error)
-            return json.dumps({"error": "An unexpected error occurred"})
+            return json.dumps({error, "An unexpected error occurred"})
 
 
 accu_weather_tools = [

@@ -6,7 +6,7 @@
 
 """
 
-Real Core Tools
+Core Tools
 ===============
 This module contains the core system tools that use the local machine only.
 
@@ -19,8 +19,6 @@ get_current_date_time()
     Get the current EST date and time.
 
 """
-import logging
-import asyncio
 from datetime import datetime
 import tzlocal
 import pytz
@@ -48,7 +46,6 @@ def display_help(tools):
             )
             console.print(f"[bold]{name}[/bold]: {description}")
         else:
-            logging.debug("Invalid tool format: %s", tool)
             console.print(f"[red]Invalid tool format: {tool}[/red]")
 
 

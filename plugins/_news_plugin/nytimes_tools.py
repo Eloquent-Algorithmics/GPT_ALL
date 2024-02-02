@@ -10,7 +10,6 @@ to fetch articles from New York Times.
 """
 
 import os
-import logging
 from typing import List
 import aiohttp
 from rich.console import Console
@@ -45,11 +44,9 @@ async def get_news_from_nytimes(query: str, api_key=TOOL_API_KEY, url=TOOL_URL) 
     # Make the request to the New York Times API
     async with aiohttp.ClientSession() as session:
         try:
-            logging.debug("Calling to NYTimes API with query: %s", query)
             async with session.get(url, params=params) as res:
                 res.raise_for_status()
                 data = await res.json()
-                logging.debug("Response from NYTimes API: %s", data)
                 nyt_news = []
                 for doc in data["response"]["docs"]:
                     nyt_news.append(
@@ -60,28 +57,11 @@ async def get_news_from_nytimes(query: str, api_key=TOOL_API_KEY, url=TOOL_URL) 
                             "link": doc["web_url"],
                         }
                     )
-                logging.debug("Processed news articles: %s", nyt_news)
                 return nyt_news
 
         # Handle exceptions
-        except aiohttp.ServerTimeoutError as server_timeout_error:
-            logging.debug(
-                "Server timeout error occurred: %s", server_timeout_error
-            )
-        except aiohttp.ClientConnectionError as connection_error:
-            logging.debug(
-                "Connection error occurred: %s", connection_error
-            )
-        except aiohttp.ClientPayloadError as payload_error:
-            logging.debug(
-                "Client payload error occurred: %s", payload_error
-            )
-        except aiohttp.ClientResponseError as response_error:
-            logging.debug(
-                "Client response error occurred: %s", response_error
-            )
-        # Return an empty list in case of any exception
-        return []
+        except aiohttp.ServerTimeoutError:
+            return []
 
 
 nytimes_tool_list = [

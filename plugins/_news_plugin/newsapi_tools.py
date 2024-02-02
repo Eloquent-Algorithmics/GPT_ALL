@@ -10,7 +10,6 @@ register for an API key @ https://newsapi.org/
 """
 
 import os
-import logging
 from typing import List
 import aiohttp
 from rich.console import Console
@@ -28,14 +27,10 @@ async def get_articles_newsapi(api_key=TOOL_API_KEY, **kwargs) -> List:
     query_params["apiKey"] = api_key
     url = "https://newsapi.org/v2/everything"
 
-    # Debug print
-    logging.info("Making request to NewsAPI with params: %s", query_params)
-
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, params=query_params, timeout=5) as res:
                 data = await res.json()
-                logging.info("Received response from NewsAPI: %s", data)
                 news = []
                 articles = data.get("articles")
                 if articles:
@@ -53,43 +48,15 @@ async def get_articles_newsapi(api_key=TOOL_API_KEY, **kwargs) -> List:
                             }
                         )
                 elif data.get("status") == "error":
-                    # Handle the case where the API returns an error
                     error_message = data.get('message', 'Unknown error')
-                    logging.debug(
-                        "NewsAPI.org returned an error: %s",
-                        error_message
-                    )
                     return []
                 else:
-                    logging.debug("Error fetching news: Status %s", res.status)
-                    return []  # Return an empty list if the status is not 200
+                    return []
 
-                # Log the results before returning
-                logging.info("News: %s", news)
                 return news
 
-        except aiohttp.ServerTimeoutError as server_timeout_error:
-            logging.debug(
-                "Server timeout error occurred: %s",
-                server_timeout_error
-            )
-        except aiohttp.ClientConnectionError as connection_error:
-            logging.debug(
-                "Connection error occurred: %s",
-                connection_error
-            )
-        except aiohttp.ClientPayloadError as payload_error:
-            logging.debug(
-                "Client payload error occurred: %s",
-                payload_error
-            )
-        except aiohttp.ClientResponseError as response_error:
-            logging.debug(
-                "Client response error occurred: %s",
-                response_error
-            )
-        # Return an empty list in case of any exception
-        return []
+        except aiohttp.ServerTimeoutError:
+            return []
 
 
 async def get_top_headlines_newsapi(api_key=TOOL_API_KEY, **kwargs) -> List:
@@ -100,14 +67,10 @@ async def get_top_headlines_newsapi(api_key=TOOL_API_KEY, **kwargs) -> List:
     query_params["apiKey"] = api_key
     url = "https://newsapi.org/v2/everything"
 
-    # Debug print
-    logging.info("Making request to NewsAPI with params: %s", query_params)
-
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, params=query_params, timeout=5) as res:
                 data = await res.json()
-                logging.info("Received response from NewsAPI: %s", data)
                 news = []
                 articles = data.get("articles")
                 if articles:
@@ -125,42 +88,13 @@ async def get_top_headlines_newsapi(api_key=TOOL_API_KEY, **kwargs) -> List:
                             }
                         )
                 elif data.get("status") == "error":
-                    # Handle the case where the API returns an error
                     error_message = data.get('message', 'Unknown error')
-                    logging.debug(
-                        "NewsAPI.org returned an error: %s",
-                        error_message
-                    )
                     return []
                 else:
-                    logging.debug("Error fetching news: Status %s", res.status)
-                    return []  # Return an empty list if the status is not 200
+                    return []
 
-                # Log the results before returning
-                logging.info("News: %s", news)
                 return news
 
-        except aiohttp.ServerTimeoutError as server_timeout_error:
-            logging.debug(
-                "Server timeout error occurred: %s",
-                server_timeout_error
-            )
-        except aiohttp.ClientConnectionError as connection_error:
-            logging.debug(
-                "Connection error occurred: %s",
-                connection_error
-            )
-        except aiohttp.ClientPayloadError as payload_error:
-            logging.debug(
-                "Client payload error occurred: %s",
-                payload_error
-            )
-        except aiohttp.ClientResponseError as response_error:
-            logging.debug(
-                "Client response error occurred: %s",
-                response_error
-            )
-        # Return an empty list in case of any exception
         return []
 
 

@@ -21,15 +21,6 @@ load_dotenv()
 # Define the live_spinner
 live_spinner = Live(Spinner("pong", " "), auto_refresh=True)
 
-
-# Main app logging configuration.
-LOGGING_ENABLED = os.getenv('LOGGING_ENABLED', 'false').lower() == 'true'
-LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'WARNING')
-LOGGING_FILE = os.getenv('LOGGING_FILE', None)
-LOGGING_FORMAT = os.getenv(
-    'LOGGING_FORMAT', '%(name)s - %(levelname)s - %(message)s'
-)
-
 # Main app system prompt.
 MAIN_SYSTEM_PROMPT = os.getenv("MAIN_SYSTEM_PROMPT")
 

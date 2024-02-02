@@ -12,7 +12,6 @@ import argparse
 import asyncio
 import inspect
 import json
-import logging
 import os
 import sys
 from pathlib import Path
@@ -25,10 +24,6 @@ from rich.markdown import Markdown
 from rich.prompt import Prompt
 
 from config import (
-    LOGGING_ENABLED,
-    LOGGING_FILE,
-    LOGGING_FORMAT,
-    LOGGING_LEVEL,
     MAIN_SYSTEM_PROMPT,
     OPENAI_API_KEY,
     OPENAI_MODEL,
@@ -81,33 +76,6 @@ openai_defaults = {
     "presence_penalty": 0,
 }
 
-# Configure logging based on the settings from .env
-if LOGGING_ENABLED:
-    # Set the logging level based on the LOGGING_LEVEL string
-    level = getattr(logging, LOGGING_LEVEL.upper(), logging.WARNING)
-    # Configure logging with or without a log file
-    if LOGGING_FILE:
-        logging.basicConfig(
-            level=level,
-            format=LOGGING_FORMAT,
-            filename=LOGGING_FILE
-        )
-        # Set the logging level for specific libraries
-        logging.getLogger(
-            'httpcore.http11').setLevel(logging.INFO)
-        logging.getLogger(
-            'googleapiclient.discovery_cache').setLevel(logging.WARNING)
-        logging.getLogger(
-            'httpcore').setLevel(logging.WARNING)
-        logging.getLogger(
-            'markdown_it.rules_block').setLevel(logging.WARNING)
-        logging.getLogger(
-            'comtypes').setLevel(logging.WARNING)
-    else:
-        logging.basicConfig(level=level, format=LOGGING_FORMAT)
-else:
-    logging.disable(logging.CRITICAL)
-
 
 def join_messages(memory: list[dict]):
     """
@@ -159,10 +127,6 @@ async def follow_conversation(
     Returns:
         The conversation memory.
     """
-    logging.info(
-        'Starting conversation with user input from line 159: %s',
-        user_text
-    )
 
     ind = min(mem_size, len(memory))
     if ind == 0:
@@ -176,15 +140,13 @@ async def follow_conversation(
         ) and ind > 1
     ):
         ind -= 1
-        memory.pop(0)  # Removes the oldest messages if the limit is exceeded
-        logging.debug('Line 172 Removed oldest message due to context limit')
+        memory.pop(0)
+
 
     response = await main_client.chat.completions.create(
         model=model, messages=memory[-ind:]
     )
-    logging.info('Line 177 Received response from chat completion')
 
-    # Checks if the response has the expected structure and content
     if (
         response.choices
         and response.choices[0].message
@@ -192,16 +154,13 @@ async def follow_conversation(
     ):
         tr = response.choices[0].message.content
         memory.append({"role": "assistant", "content": tr})
-        logging.info('Line 187 Added assistant response to memory: %s', tr)
     else:
-        # Handles the case where the expected content is not available
         memory.append(
             {
                 "role": "assistant",
                 "content": "I'm not sure how to respond to that."
             }
         )
-        logging.warning('Line 196 Expected content not available in response')
 
     return memory
 
@@ -230,10 +189,6 @@ async def run_conversation(
     Returns:
         The final response from the model.
     """
-    logging.info(
-        'Starting conversation with user input line 225: %s',
-        original_user_input
-    )
 
     memory = await follow_conversation(
         user_text=original_user_input,
@@ -245,7 +200,6 @@ async def run_conversation(
 
     while len(json.dumps(memory)) > 128000:
         memory.pop(0)
-        logging.debug('Line 240 removed oldest message due to context limit')
 
     response = await main_client.chat.completions.create(
         model=openai_defaults["model"],
@@ -258,7 +212,6 @@ async def run_conversation(
         frequency_penalty=openai_defaults["frequency_penalty"],
         presence_penalty=openai_defaults["presence_penalty"],
     )
-    logging.info('Line 253 received response from chat completion')
 
     response_message = response.choices[0].message
     tool_calls = (
@@ -273,10 +226,6 @@ async def run_conversation(
                 "role": "assistant", "content": response_message.content
             }
         )
-        logging.info(
-            'Line 268 added assistant response to memory: %s',
-            response_message.content
-        )
 
     if tool_calls:
         messages.append(response_message)
@@ -286,30 +235,15 @@ async def run_conversation(
             function_name = tool_call.function.name
 
             if function_name not in available_functions:
-                logging.warning(
-                    'Line 281 function %s is not available',
-                    function_name
-                )
                 continue
 
             function_to_call = available_functions[function_name]
             function_args = json.loads(tool_call.function.arguments)
 
-            logging.info(
-                "Line 290 calling function: %s args: %s",
-                function_name,
-                function_args,
-            )
-            # Inside your run_conversation function
             if inspect.iscoroutinefunction(function_to_call):
                 function_response = await function_to_call(**function_args)
             else:
                 function_response = function_to_call(**function_args)
-            logging.info(
-                "Line 300 function %s returned: %s",
-                function_name,
-                function_response,
-            )
 
             if function_response is None:
                 function_response = "No response received from the function."
@@ -326,7 +260,6 @@ async def run_conversation(
             messages.append(function_response_message)
             executed_tool_call_ids.append(tool_call.id)
 
-        # Ensure the next message prompts the assistant to use tool responses
         messages.append(
             {
                 "role": "user",
@@ -341,7 +274,6 @@ async def run_conversation(
             }
         )
 
-        # Create next completion ensuring to pass the updated messages array
         second_response = await main_client.chat.completions.create(
             model=openai_defaults["model"],
             messages=messages,
@@ -353,7 +285,7 @@ async def run_conversation(
             frequency_penalty=openai_defaults["frequency_penalty"],
             presence_penalty=openai_defaults["presence_penalty"],
         )
-        logging.info('Line 350 received second response from chat completion')
+
         return second_response, memory
     else:
         return response, memory
@@ -381,7 +313,6 @@ async def main():
 
     console.print(Markdown("# 👋  GPT_ALL 👋"), style="bold blue")
 
-    # Initialize available base functions and tools
     available_functions = {
         "get_current_date_time": get_current_date_time,
         "ask_chat_gpt_4_0314_synchronous": ask_chat_gpt_4_0314_synchronous,
@@ -394,7 +325,6 @@ async def main():
         "ask_gpt_4_vision": ask_gpt_4_vision,
     }
 
-    # Define core tools here
     tools = [
         {
             "type": "function",
@@ -625,37 +555,28 @@ async def main():
         },
     ]
 
-    # Use the load_plugins_and_get_tools function to conditionally add tools
     available_functions, tools = await enable_plugins(
         available_functions,
         tools
     )
-    logging.info('Enabled plugins line 560')
 
-    # Initialize the conversation memory
     memory = []
 
     # Main Loop
     while True:
-        # Ask the user for input
+
         user_input = Prompt.ask(
             "\nHow can I be of assistance? ([yellow]/tools[/yellow] or [bold yellow]quit[/bold yellow])",
         )
-        logging.info('Line 555 received user input: %s', user_input)
 
-        # Check if the user wants to exit the program
         if user_input.lower() == "quit":
-            logging.info('User requested to quit the program')
             console.print("\nQuitting the program.", style="bold red")
             break
 
-        # Check if the user wants to see the available tools
         elif user_input.lower() == "/tools":
-            logging.info('User requested to see the available tools')
             display_help(tools)
             continue
 
-        # Prepare the conversation messages
         messages = [
             {
                 "role": "system",
@@ -667,13 +588,11 @@ async def main():
             },
             {"role": "user", "content": f"{user_input}"},
         ]
-        logging.info('Line 581 prepared conversation messages')
 
         with live_spinner:
 
             live_spinner.start()
 
-            # Pass the user input and memory to the run_conversation function
             final_response, memory = await run_conversation(
                 messages=messages,
                 tools=tools,
@@ -682,36 +601,26 @@ async def main():
                 mem_size=200,
                 memory=memory,
             )
-            # Stop the spinner
             live_spinner.stop()
 
-        # Print the final response from the model or use TTS
         if final_response:
             response_message = final_response.choices[0].message
             if response_message.content is not None:
                 final_text = response_message.content
                 if use_tts:
-                    # Use TTS to output the final response
                     console.print("\n" + final_text, style="green")
-                    tts_output(final_text)  # Call the tts_output function directly
+                    tts_output(final_text)
                 else:
-                    # Print the final response to the console
                     console.print("\n" + final_text, style="green")
             else:
-                # Print an error message if the model did not return a response
-                logging.warning('Model did not return a response line 610')
                 console.print("\nI'm not sure how to help with that.", style="red")
         else:
-            # Print an error message if the model did not return a response
-            logging.warning('Model did not return a response line 614')
             console.print("\nI'm not sure how to help with that.", style="red")
 
         # Remove tools from the tools list after processing
         tools[:] = [tool for tool in tools if not tool.get("function", {}).get("name", "").lower() in user_input.lower()]
-        logging.info('Removed used tools from the tools list line 622')
 
 
 # Run the main function
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())

@@ -8,8 +8,7 @@
 This module defines the Gemini Pro Vision Tools.
 """
 
-import os
-import logging
+import os 
 import google.generativeai as genai
 from vertexai.preview.generative_models import Image
 
@@ -25,13 +24,7 @@ async def ask_gemini_pro_vision(self, question, specific_file_name) -> Image:
         specific_file_name: The name of the image file.
     """
     try:
-        logging.debug(
-            "Received question: %s, for file: %s",
-            question,
-            specific_file_name
-        )
 
-        # Set up the generation configuration
         generation_config = {
             "temperature": 0.4,
             "top_p": 1,
@@ -39,39 +32,24 @@ async def ask_gemini_pro_vision(self, question, specific_file_name) -> Image:
             "max_output_tokens": 1024,
         }
 
-        # Read the image file as bytes and encode it with base64
         try:
             image_path = os.path.join(SOURCE_FOLDER, specific_file_name)
-            logging.debug(
-                "Reading image from path: %s",
-                image_path
-            )
 
             with open(image_path, "rb") as image_file:
                 image_bytes = image_file.read()
 
         except FileNotFoundError:
-            logging.error(
-                "File not found: %s",
-                image_path
-            )
+
             return "File not found."
 
         except PermissionError:
-            logging.error(
-                "Permission denied when accessing the file: %s",
-                image_path
-            )
+
             return "Permission denied."
 
         except TypeError:
-            logging.error(
-                "An unexpected error occurred while reading the file: %s",
-                image_path
-            )
+
             return "Error reading the file."
 
-        # Set the safety settings to block harmful content
         safety_settings = [
             {
                 "category": "HARM_CATEGORY_HARASSMENT",
@@ -91,55 +69,40 @@ async def ask_gemini_pro_vision(self, question, specific_file_name) -> Image:
             }
         ]
 
-        # Create a GenerativeModel object for the Gemini Pro Vision model
         try:
             model = genai.GenerativeModel(model_name="gemini-pro-vision",
                                           generation_config=generation_config,
                                           safety_settings=safety_settings)
 
-        except TypeError as e:
-            logging.error(
-                "Error creating the GenerativeModel object: %s", e
-            )
+        except TypeError:
+
             return "Error creating the model."
 
-        except ValueError as e:
-            logging.error(
-                "Error creating the GenerativeModel object: %s", e
-            )
+        except ValueError:
+
             return "Error creating the model."
 
-        # Make the request and stream the responses
         try:
             responses = model.generate_content(
                 [image_bytes, question],
                 stream=False,
             )
-        except FileNotFoundError as e:
-            logging.error(
-                "File not found: %s", e,
-            )
+        except FileNotFoundError:
+
             return "File not found."
 
-        except PermissionError as e:
-            logging.error(
-                "Permission denied when accessing the file: %s", e,
-            )
+        except PermissionError:
+
             return "Permission denied."
 
-        except TypeError as e:
-            logging.error(
-                "An unexpected error occurred while reading the file: %s", e,
-            )
+        except TypeError:
+
             return "Error reading the file."
 
-        except ValueError as e:
-            logging.error(
-                "Error creating the GenerativeModel object: %s", e
-            )
+        except ValueError:
+
             return "Error creating the model."
 
-        # Process the response
         try:
             for response in responses:
                 if response.candidates:
@@ -147,34 +110,27 @@ async def ask_gemini_pro_vision(self, question, specific_file_name) -> Image:
                 else:
                     return "No response candidates found."
 
-        except FileNotFoundError as e:
-            logging.error("File not found: %s", e)
+        except FileNotFoundError:
+
             return "File not found."
-        except PermissionError as e:
-            logging.error("Permission denied when accessing the file: %s", e)
+        except PermissionError:
+
             return "Permission denied."
-        except TypeError as e:
-            logging.error(
-                "An unexpected error occurred while reading the file: %s", e
-            )
+        except TypeError:
+
             return "Error reading the file."
-        except ValueError as e:
-            logging.error("Error creating the GenerativeModel object: %s", e)
+        except ValueError:
+
             return "Error creating the model."
 
-    except FileNotFoundError as e:
-        logging.error("File not found: %s", e)
+    except FileNotFoundError:
         return "File not found."
-    except PermissionError as e:
-        logging.error("Permission denied when accessing the file: %s", e)
+    except PermissionError:
         return "Permission denied."
-    except TypeError as e:
-        logging.error(
-            "An unexpected error occurred while reading the file: %s", e
-        )
+    except TypeError:
+
         return "Error reading the file."
-    except ValueError as e:
-        logging.error("Error creating the GenerativeModel object: %s", e)
+    except ValueError:
         return "Error creating the model."
 
 

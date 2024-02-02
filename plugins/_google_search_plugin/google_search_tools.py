@@ -9,7 +9,6 @@ Tools for interacting with Google Search API.
 """
 
 import os
-import logging
 import asyncio
 from typing import List
 import aiohttp
@@ -48,19 +47,9 @@ def search_google_synchronous(query: str, num: [int] = 10, start: [int] = 1, fil
     if lr:
         params["lr"] = lr
 
-    # Debug print
-    logging.info(
-        "Making request to Google CSE API with params: %s",
-        params
-    )
-
     try:
         res = requests.get(url, params=params, timeout=5)
         data = res.json()
-        logging.info(
-            "Received response from Google CSE API: %s",
-            data
-        )
         results = []
         if data.get("items"):
             for item in data["items"]:
@@ -71,15 +60,10 @@ def search_google_synchronous(query: str, num: [int] = 10, start: [int] = 1, fil
                         "link": item["link"],
                     }
                 )
-        # Log the results before returning
-        logging.info("Search results: %s", results)
+
         return results
 
-    except requests.exceptions.RequestException as error:
-        logging.error(
-            "An error occurred: %s",
-            error
-        )
+    except requests.exceptions.RequestException:
         return []
 
 
@@ -106,26 +90,16 @@ async def search_google_asynchronous(query: str, num: [int] = 10, start: [int] =
         "safe": safe,
     }
 
-    # Add optional parameters if they are provided
     if fileType:
         params["fileType"] = fileType
     if lr:
         params["lr"] = lr
 
-    # Debug print
-    logging.info(
-        "Making request to Google CSE API with params: %s",
-        params
-    )
-
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, params=params, timeout=5) as res:
                 data = await res.json()
-                logging.info(
-                    "Received response from Google CSE API: %s",
-                    data
-                )
+
                 results = []
                 if data.get("items"):
                     for item in data["items"]:
@@ -136,29 +110,17 @@ async def search_google_asynchronous(query: str, num: [int] = 10, start: [int] =
                                 "link": item["link"],
                             }
                         )
-                # Log the results before returning
-                logging.info("Search results: %s", results)
+
                 return results
 
-        except (KeyError, TypeError) as error:
-            logging.error(
-                "An error occurred: %s",
-                error
-            )
+        except (KeyError, TypeError):
+
             return []
 
-        except asyncio.TimeoutError as error:
-            logging.error(
-                "Timeout error occurred: %s",
-                error
-            )
+        except asyncio.TimeoutError:
             return []
 
-        except aiohttp.ClientError as error:
-            logging.error(
-                "Client error occurred: %s",
-                error
-            )
+        except aiohttp.ClientError:
             return []
 
 
