@@ -9,58 +9,25 @@
 </head>
 <body>
     <div class="chat-container">
-      <h1>GPT_ALL</h1>
-      <div class="chat-window" id="chat-window"></div>
-      <form id="input-form">
-        <textarea
-          id="user-input"
-          name="user-input"
-          placeholder="Enter your message..."
-          rows="1"
-        ></textarea>
-        <div class="tabBar">
-          <button id="clear-chat-btn" type="button">Clear</button>
-          <input type="submit" value="Send" />
-        </div>
-      </form>
+        <h1>GPT_ALL</h1>
+        <div class="chat-window" id="chat-window"></div>
+        <form id="input-form">
+            <textarea
+                id="user-input"
+                name="user-input"
+                placeholder="Enter your message..."
+                rows="1"
+            ></textarea>
+            <div class="tabBar">
+                <button id="clear-chat-btn" type="button">Clear</button>
+                <input type="submit" value="Send" />
+            </div>
+        </form>
     </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="/static/chat.js"></script>
     <script>
-        const chat = document.getElementById("chat-window");
-        const inputForm = document.getElementById("input-form");
-        const userInput = document.getElementById("user-input");
-        const clearChatBtn = document.getElementById("clear-chat-btn");
-
-        let memory = [];
-
-        inputForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const userText = userInput.value.trim();
-            if (!userText) return;
-
-            chat.innerHTML += `<div class="message-wrapper user"><div class="user-message">${userText}</div><img class="useravatar" src="${userAvatarUrl}" /></div>`;
-            userInput.value = "";
-
-            const response = await fetch("/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_input: userText, memory }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                chat.innerHTML += `<div class="message-wrapper ai"><img class="aiavatar" src="${aiAvatarUrl}" /><div class="ai-message">${data.response}</div></div>`;
-                memory = data.memory;
-                chat.scrollTop = chat.scrollHeight;
-            } else {
-                chat.innerHTML += `<div class="message-wrapper ai"><div class="ai-message">Error: Unable to get a response from the assistant.</div></div>`;
-            }
-        });
-
-        clearChatBtn.addEventListener("click", () => {
-            chat.innerHTML = "";
-        });
-    </script>
-    <script>
+        // Define avatar URLs here for global access
         const userAvatarUrl = "/static/U1.webp";
         const aiAvatarUrl = "/static/J5.webp";
     </script>

@@ -1,60 +1,65 @@
-function clearChatHistory() {
-    $("#chat-window").empty();
+$(document).ready(function () {
+  function clearChatHistory() {
+      $("#chat-window").empty();
   }
-  
+
   function scrollToBottom() {
-    const chatWindow = document.getElementById("chat-window");
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+      const chatWindow = $("#chat-window")[0];
+      chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-  
-  $(document).ready(function () {
-    $("#chat-form").on("submit", function (event) {
-      event.preventDefault();
-      const userInput = $("#user-input").val();
-      if (userInput.trim() === "") return;
-  
-      // Display user input in the chat window
-      $("#chat-window").append(`<div class="user-message">${userInput}</div>`);
-      scrollToBottom(); // Call scrollToBottom() after adding the user message
-  
-      // Send user input to the server
-      $.ajax({
-        url: "/process_chat",
-        type: "POST",
-        data: {
-          user_input: userInput,
-        },
-        success: function (response) {
-          // Display AI response in the chat window
-          $("#chat-window").append(
-            `<div class="ai-message">${response.response}</div>`
-          );
-          scrollToBottom(); // Call scrollToBottom() after adding the AI message
-        },
-        error: function (error) {
-          console.log(error);
-          alert("Error processing chat. Please try again.");
-        },
+
+  let memory = [];
+
+  function showTypingAnimation() {
+      const typingDots = '<span>.</span><span>.</span><span>.</span>';
+      $("#chat-window").append(`<div class="message-wrapper ai" id="typing-animation"><img class="aiavatar" src="${aiAvatarUrl}" /><div class="ai-message">${typingDots}</div></div>`);
+      scrollToBottom();
+  }
+
+  function removeTypingAnimation() {
+      $("#typing-animation").remove();
+  }
+
+  // Preload images
+  function preloadImages() {
+      const imagesToPreload = ["/static/U1.webp", "/static/J5.webp"];
+      imagesToPreload.forEach(imageSrc => {
+          const img = new Image();
+          img.src = imageSrc;
       });
-  
-      // Clear the input field
+  }
+
+  preloadImages();
+
+  $("#input-form").submit(async function (event) {
+      event.preventDefault();
+      const userText = $("#user-input").val().trim();
+      if (!userText) return;
+
+      $("#chat-window").append(`<div class="message-wrapper user"><div class="user-message">${userText}</div><img class="useravatar" src="${userAvatarUrl}" /></div>`);
       $("#user-input").val("");
-    });
-  
-    $("#clear-chat-btn").on("click", function () {
+
+      showTypingAnimation();
+
+      try {
+          const response = await $.ajax({
+              url: "/chat", // Make sure this endpoint is correct
+              type: "POST",
+              contentType: "application/json",
+              data: JSON.stringify({ user_input: userText, memory }),
+          });
+
+          removeTypingAnimation();
+          $("#chat-window").append(`<div class="message-wrapper ai"><img class="aiavatar" src="${aiAvatarUrl}" /><div class="ai-message">${response.response}</div></div>`);
+          memory = response.memory;
+          scrollToBottom();
+      } catch (error) {
+          console.error("Error: Unable to get a response from the assistant.", error);
+          $("#chat-window").append(`<div class="message-wrapper ai"><div class="ai-message">Error: Unable to get a response from the assistant.</div></div>`);
+      }
+  });
+
+  $("#clear-chat-btn").click(function () {
       clearChatHistory();
-    });
   });
-  
-  $("#chat-form").on("submit", function (event) {
-    event.preventDefault();
-    var userInput = $("#user-input").val();
-    $.post("/send_message", { "user-input": userInput }, function (data) {
-      // Append the AI response to the chat window
-      $("#chat-window").append(
-        '<div class="chat-bubble ai"><p>' + data.ai_response + '</p></div>'
-      );
-      // Clear the user input field
-      $("#user-input").val("");
-    });
-  });
+});
