@@ -12,7 +12,7 @@ app = cors(app, allow_origin="*")
 
 @app.route("/")
 async def index():
-    return await send_file("index.html")
+    return await send_file("templates/index.html")
 
 
 @app.route("/static/<path:path>")
