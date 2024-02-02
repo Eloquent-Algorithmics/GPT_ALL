@@ -72,7 +72,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_chat_gpt_4_0314_synchronous",
-            "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance.",
+            "description": "Ask a more experienced colleague for assistance.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -97,7 +97,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_chat_gpt_4_0314_asynchronous",
-            "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance.",
+            "description": "Ask a more experienced colleague for assistance.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -122,7 +122,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_chat_gpt_4_32k_0314_synchronous",
-            "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance.",
+            "description": "Ask a more experienced colleague for assistance.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -147,7 +147,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_chat_gpt_4_32k_0314_asynchronous",
-            "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance.",
+            "description": "Ask a more experienced colleague for assistance.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -172,7 +172,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_chat_gpt_4_0613_synchronous",
-            "description": "This function allows you to ask a larger AI LLM for assistance synchronously, like asking a more experienced colleague for assistance.",
+            "description": "Ask a more experienced colleague for assistance.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -205,7 +205,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_chat_gpt_4_0613_asynchronous",
-            "description": "This function allows you to ask a larger AI LLM for assistance asynchronously, like asking a more experienced colleague for assistance.",
+            "description": "Ask a more experienced colleague for assistance.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -307,7 +307,7 @@ async def chat():
     final_response, memory = await run_conversation(
         messages=[
             {"role": "system", "content": f"{MAIN_SYSTEM_PROMPT}"},
-            {"role": "assistant", "content": "Understood. As we continue, feel free to direct any requests or tasks you'd like assistance with. Whether it's querying information, managing schedules, processing data, or utilizing any of the tools and functionalities I have available, I'm here to help. Just let me know what you need, and I'll do my best to assist you effectively and efficiently."},
+            {"role": "assistant", "content": "Understood. As we continue, feel free to direct any requests or tasks you'd like assistance with. Whether it's querying information, managing schedules, processing data, or utilizing any of the tools and functionalities I have available."},
             {"role": "user", "content": f"{user_input}"},
         ],
         tools=tools + plugin_tools,
