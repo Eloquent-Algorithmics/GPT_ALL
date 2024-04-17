@@ -22,7 +22,7 @@ COPY requirements.txt /workspace/
 RUN conda run -n gpt_all pip install --no-cache-dir -r requirements.txt
 
 # Download the SpaCy NLP model in the eAI environment
-RUN conda run -n gpt_all python -m spacy download en_core_web_sm
+RUN conda run -n gpt_all python -m spacy download en_core_web_md
 
 # Set the default environment to eAI when starting the container
 # This will activate the eAI environment for any interactive or non-interactive shell

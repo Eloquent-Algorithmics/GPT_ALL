@@ -18,7 +18,7 @@ import json
 import aiohttp
 import spacy
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_md")
 
 
 def extract_location(user_input):

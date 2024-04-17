@@ -10,7 +10,7 @@ echo Installing the Python requirements...
 call pip install -r requirements.txt
 
 echo Downloading the SpaCy NLP model...
-call python -m spacy download en_core_web_sm
+call python -m spacy download en_core_web_md
 
 echo Installation completed.
 pause

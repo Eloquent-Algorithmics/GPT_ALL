@@ -16,7 +16,7 @@ from googleapiclient.http import (
     MediaFileUpload,
 )
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_md")
 
 
 def extract_file_names(text):
